@@ -8,6 +8,16 @@ short sampleBuffer[256];
   
 // number of samples read
 volatile int samplesRead;
+
+// BLE Characteristics
+BLEService testService("180C");
+BLECharCharacteristic accelLevelX("2101", BLERead | BLENotify);
+BLECharCharacteristic accelLevelY("2102", BLERead | BLENotify);
+BLECharCharacteristic accelLevelZ("2103", BLERead | BLENotify);
+BLECharCharacteristic compassLevelX("2104", BLERead | BLENotify);
+BLECharCharacteristic compassLevelY("2105", BLERead | BLENotify);
+BLECharCharacteristic compassLevelZ("2106", BLERead | BLENotify);
+BLECharCharacteristic compassHeading("2107", BLERead | BLENotify);
   
 void onPDMdata() {
     // query the number of bytes available
@@ -41,10 +51,31 @@ void setup() {
     Serial.println("Failed to initialize IMU!");
     while (1);
   }
+
+  if(!BLE.begin()){
+    Serial.println("Failed to initialize BLE!");
+    while (1);
+  }
+
+  BLE.setLocalName("Multitasker");
+  BLE.setAdvertisedService(testService);
+  testService.addCharacteristic(accelLevelX);
+  testService.addCharacteristic(accelLevelY);
+  testService.addCharacteristic(accelLevelZ);
+  testService.addCharacteristic(compassLevelX);
+  testService.addCharacteristic(compassLevelY);
+  testService.addCharacteristic(compassLevelZ);
+  BLE.addService(testService);
+
+  BLE.advertise();
+  Serial.print("Peripheral device MAC: ");
+  Serial.println(BLE.address());
+  Serial.println("Waiting for connections...");
   
 }
 
-void loop() {
+void loop() { 
+  // Temp/Humidity Example
   /*float temp = HTS.readTemperature();
   float humid = HTS.readHumidity();
 
@@ -52,6 +83,7 @@ void loop() {
   Serial.println(humid);
   */
 
+  // Sound Example
   /*
   if(samplesRead){
 
@@ -65,18 +97,50 @@ void loop() {
       samplesRead = 0;
   }
   */
-
-  float x, y, z;
+  
+  // Gyroscope Example
+  float gyroX, gyroY, gyroZ;
 
   if (IMU.gyroscopeAvailable()) {
-        IMU.readGyroscope(x, y, z);
+        IMU.readGyroscope(gyroX, gyroY, gyroZ);
 
-        Serial.print(x);
+        /*
+        Serial.print(gyroX);
         Serial.print('\t');
-        Serial.print(y);
+        Serial.print(gyroY);
         Serial.print('\t');
-        Serial.println(z);
+        Serial.println(gyroZ);
+        */
+        
   }
 
-  delay(250);
+  // Mag Field Example
+  float magX, magY, magZ;
+  
+  if(IMU.magneticFieldAvailable()){
+        IMU.readMagneticField(magX, magY, magZ);
+
+        /*
+        Serial.print(magX);
+        Serial.print('\t');
+        Serial.print(magY);
+        Serial.print('\t');
+        Serial.println(magZ);
+        */
+  }
+
+  // Wait for a BLE central to connect
+  BLEDevice central = BLE.central();
+  
+  // if a central is connected to the peripheral:
+  if (central.connected()) {
+    accelLevelX.writeValue(gyroX);
+    accelLevelY.writeValue(gyroY);
+    accelLevelZ.writeValue(gyroZ);
+    compassLevelX.writeValue(magX);
+    compassLevelY.writeValue(magY);
+    compassLevelZ.writeValue(magZ);
+  }
+
+  delay(50);
 }
