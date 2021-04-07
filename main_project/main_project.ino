@@ -3,6 +3,20 @@
 #include <PDM.h>
 #include <Arduino_LSM9DS1.h>
 
+// Global Variables
+// Temperature & Humidity Values
+float temp;
+float tempH;
+float humidity;
+float humidityH
+
+// Temperature & Humidity Task Control
+int tempHumidityInterval = 500; // The task interval in ms
+int tempHumidityIntervalH; // How long it took last time.
+int tempHumidityLength; // Length of task this time.
+int tempHumidityStartTime; // The start time of the task in ms.
+int tempHumidityStartTimeH = millis(); // The clock when the task starts history.
+
 void setup() {
     // Initialise Serial Output
     Serial.begin(9600);
@@ -36,6 +50,10 @@ void setup() {
 
 void loop() {
 
+    float humid = HTS.readHumidity();
+
+    Serial.println(temp);
+    Serial.println(humid);
 
 
 }
