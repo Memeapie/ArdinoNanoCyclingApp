@@ -2,6 +2,7 @@
 #include <ArduinoBLE.h>
 #include <PDM.h>
 #include <Arduino_LSM9DS1.h>
+#include <Arduino_APDS9960.h>
 
 // Global Variables
 // Debug Mode
@@ -27,6 +28,19 @@ int tempHumidityStartTimeH = millis(); // The clock when the task starts history
 int tempHumidityFailInterval = 1500; // The task fail interval in ms.
 int tempHumidityError = ERRORCLEAR; // Error Code container.
 
+// Light Level Values
+int lightLevelRed, lightLevelBlue, lightLevelGreen;
+int lightLevelRedH, lightLevelBlueH, lightLevelGreenH;
+
+// Light Level Task Control
+int lightLevelInterval = 500; // The task interval in ms
+int lightLevelIntervalH; // How long it took last time.
+int lightLevelLength; // Length of task this time.
+int lightLevelStartTime; // The start time of the task in ms.
+int lightLevelStartTimeH = millis(); // The clock when the task starts history.
+int lightLevelFailInterval = 1500; // The task fail interval in ms.
+int lightLevelError = ERRORCLEAR; // Error Code container.
+
 void setup() {
     // Initialise Serial Output
     Serial.begin(9600);
@@ -50,6 +64,11 @@ void setup() {
         while (1);
     }
 
+    // Initialise APDS9960 Light Sensor
+    if (!APDS.begin()) {
+       Serial.println("Error initializing APDS9960 sensor!");
+    }
+
     // Initialise Bluetooth Module
     if (!BLE.begin()){
         Serial.println("Starting BLE failed!");
@@ -70,12 +89,14 @@ void updateTempHumidity(){
         // Check that the we have not failed to read the sensors in the expected period.
         if(tempHumidityStartTime > (tempHumidityStartTimeH+tempHumidityFailInterval)){
             if(testing){
-                Serial.println("Temperature & Humidity failed to read specified time.");
+                Serial.println("Temperature & Humidity failed to read in specified time.");
                 delay(300);
             }
 
+            // Log Error Code
             tempHumidityError = ERRORTIMING;
             tempHumidityStartTimeH = tempHumidityStartTime;
+
         } else {
             // Update History
             humidityH = humidity;
@@ -105,8 +126,77 @@ void updateTempHumidity(){
     }
 }
 
+// Method to Update Temperature and Humidity
+void updateLightLevel(){
+
+    // Reading Temperature & Humidity
+    lightLevelStartTime = millis();
+
+    // Decide if the interval for Updating Temperature & Humidity has passed.
+    if(lightLevelStartTime > (lightLevelStartTimeH+lightLevelInterval)){
+
+        // Check that the we have not failed to read the sensors in the expected period.
+        if(lightLevelStartTime > (lightLevelStartTimeH+lightLevelFailInterval)){
+            if(testing){
+                Serial.println("Light Level failed to read in specified time.");
+                delay(300);
+            }
+
+            // Log Error Code
+            lightLevelError = ERRORTIMING;
+            lightLevelStartTimeH = lightLevelStartTime;
+
+        } else {
+
+            // Check there is new Light Data Available
+            if (APDS.colorAvailable()) {
+
+                // Update the Light Information History
+                lightLevelRedH = lightLevelRed;
+                lightLevelBlueH = lightLevelBlue;
+                lightLevelGreenH = lightLevelGreen;
+
+                // Update with new Light Data
+                APDS.readColor(lightLevelRed, lightLevelBlue, lightLevelGreen);
+
+                // Print Values if in Debug Mode
+                if(testing){
+                    Serial.print("Light Level Red: ");
+                    Serial.println(lightLevelRed);
+                    Serial.print("Light Level Green: ");
+                    Serial.println(lightLevelBlue);
+                    Serial.print("Light Level Blue: ");
+                    Serial.println(lightLevelGreen);
+                }
+            } else {
+            
+                // Log Error Code
+                if(lightLevelError == ERRORCLEAR){
+                    if(testing){
+                        Serial.println("APDS9960 - Color Sensor Failed to Start.");
+                    }
+                    lightLevelError = ERRORSENSOR;
+                }
+            }
+
+            // Copy history so we can use it to trigger the next shot
+            lightLevelLength = millis() - lightLevelStartTime;
+            lightLevelStartTimeH = lightLevelStartTime;
+
+            // Print Values if in Debug Mode
+            if(testing){
+                Serial.print("Light Level Task Time Interval: ");
+                Serial.print(lightLevelLength);
+                Serial.println(" Milliseconds");
+            }
+        }
+    }
+}
+
 void loop() {
 
     updateTempHumidity();
+
+    updateLightLevel();
 
 }
