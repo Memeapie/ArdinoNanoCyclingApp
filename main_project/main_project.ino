@@ -13,6 +13,14 @@ const int ERRORCLEAR = 0; // No fault.
 const int ERRORTIMING = 1; // The task failed due to a timing error.
 const int ERRORSENSOR = 2; // A task sensor has failed.
 
+// BLE Service & Characteristics
+BLEService bluetoothCycleService("180C");
+
+// BLE Task Control
+long bluetoothInterval = 1000; // The task interval in ms
+long bluetoothStartTime;
+long bluetoothStartTimeH = 0;
+
 // Temperature & Humidity Values
 float temp;
 float tempH;
@@ -75,6 +83,22 @@ void setup() {
         while (1);
     }
 
+    // Initialise BLE Service
+    BLE.setLocalName("CycleArduino");
+    BLE.setAdvertisedService(bluetoothCycleService);
+
+    // Add Characteristics for BLE Here (i.e bluetoothCycleService.addCharacteristic(property);
+    // ...
+
+    // Advertise BLE Service
+    BLE.addService(bluetoothCycleService);
+    BLE.advertise();
+
+    if (testing) {
+        Serial.print("Peripheral device MAC: ");
+        Serial.println(BLE.address());
+        Serial.println("Waiting for connections...");
+    }
 }
 
 // Method to Update Temperature and Humidity
@@ -193,10 +217,49 @@ void updateLightLevel(){
     }
 }
 
+void bluetoothServicing(){
+
+    // Designate Central Task
+    BLEDevice central = BLE.central();
+
+    // If the BLE Service is defined, send some data
+    if (central) {
+        if (testing) {
+            Serial.print("Connected to central: ");
+            Serial.println(central.address());
+        }
+
+        // Make the LED Turn on to signify data transmission
+        digitalWrite(LED_BUILTIN, HIGH);
+
+        // If there is a device connected, begin sending data
+        if (central.connected()) {
+
+            // Write to the Characteristics of BLE (i.e characteristic.writeValue(value))
+        }
+    } else {
+
+        if (testing) {
+            Serial.println("Central Disconnected");
+        }
+
+        // Make the LED Turn off to signify data transmission has finished
+        digitalWrite(LED_BUILTIN, LOW);
+    }
+
+    //Now lets get the history set up.
+    bluetoothStartTimeH = bluetoothStartTime;
+
+}
+
 void loop() {
 
     updateTempHumidity();
 
     updateLightLevel();
 
+    bluetoothStartTime = millis();
+    if(bluetoothStartTime > (bluetoothStartTimeH+bluetoothInterval)) {
+         bluetoothServicing();
+    }
 }
