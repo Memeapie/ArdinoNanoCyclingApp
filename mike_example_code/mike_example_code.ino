@@ -165,73 +165,69 @@ void loop(){
             }
             task1_Error = ERRORTIMING;
             task1_StartTimeH = task1_StartTime;
-            } else {
-                //Put all our task stuff here.
-                //In ths case just grab the magnatometor data.
+        } else {
+        //Put all our task stuff here.
+        //In ths case just grab the magnatometor data.
 
-
-
-                if (IMU.magneticFieldAvailable()) {
-                    IMU.readMagneticField(cx, cy, cz);
-                    //Now we can find out how long our task has taken and update our histories.
-
-
-
-                    //Now work out heading
-                    float h = (atan2(cy,cx)*180)/PI;
-                    //Copy calced value to variable for BLE handling.
-                    compassHeadingValue = h;
-
-                    if(testing){
-                        Serial.print(cx);
-                        Serial.print('\t');
-                        Serial.print(cy);
-                        Serial.print('\t');
-                        Serial.print(cz);
-                        Serial.print('\t');
-                        Serial.println(h);
-                    }
-                } else {
-                    //The magnatometer did not start - won't hold up but will report.
-                    if(task1_Error == ERRORCLEAR){
-                        if(testing){
-                            Serial.println(" Magnatometer did not start.");
-                        }
-                        task1_Error = ERRORSENSOR;
-                    }
-                }
-                //Now lets add a delay to check our timing system - we can remove this later.
-                //delay(50);
+            if (IMU.magneticFieldAvailable()) {
+                IMU.readMagneticField(cx, cy, cz);
                 //Now we can find out how long our task has taken and update our histories.
-                task1_Length = millis() - task1_StartTime;
-                task1_StartTimeH = task1_StartTime; //Copy history so we can use it to trigger the next shot
+
+                //Now work out heading
+                float h = (atan2(cy,cx)*180)/PI;
+                //Copy calced value to variable for BLE handling.
+                compassHeadingValue = h;
+
                 if(testing){
-                    Serial.print("Task 1 time interval: ");
-                    Serial.print(task1_Length);
-                    Serial.println(" Milliseconds");
+                    Serial.print(cx);
+                    Serial.print('\t');
+                    Serial.print(cy);
+                    Serial.print('\t');
+                    Serial.print(cz);
+                    Serial.print('\t');
+                    Serial.println(h);
+                }
+            } else {
+                //The magnatometer did not start - won't hold up but will report.
+                if(task1_Error == ERRORCLEAR){
+                    if(testing){
+                        Serial.println(" Magnatometer did not start.");
+                    }
+                    task1_Error = ERRORSENSOR;
                 }
             }
-        }
-
-
-
-        BLE_StartTime = millis();
-        if(BLE_StartTime > (BLE_StartTimeH+BLE_interval)) {
-            BLE_servicing();
-        }
-
-
-
-        // Now longer used delay(1000);
-        if(testing){
-            Serial.println("Loop");
-            delay(500);
+            //Now lets add a delay to check our timing system - we can remove this later.
+            //delay(50);
+            //Now we can find out how long our task has taken and update our histories.
+            task1_Length = millis() - task1_StartTime;
+            task1_StartTimeH = task1_StartTime; //Copy history so we can use it to trigger the next shot
+            if(testing){
+                Serial.print("Task 1 time interval: ");
+                Serial.print(task1_Length);
+                Serial.println(" Milliseconds");
+            }
         }
     }
 
 
 
-    void BLE_servicing(){
+    BLE_StartTime = millis();
+    if(BLE_StartTime > (BLE_StartTimeH+BLE_interval)) {
+         BLE_servicing();
+    }
+
+
+
+    // Now longer used delay(1000);
+    if(testing){
+        Serial.println("Loop");
+        delay(500);
+    }
+}
+
+
+
+void BLE_servicing(){
     BLEDevice central = BLE.central();
 
     if (central) {
