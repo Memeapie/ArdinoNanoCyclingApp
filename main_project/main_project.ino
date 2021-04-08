@@ -80,7 +80,8 @@ double elevationH = 0; // the cyclist elevation last time
 double elevationChange = 0; // elevation change between current read and previous read
 double elevationGain = 0; // the rider's total elevationGain or loss throughout the ride
 double pressureKPA = 0; //sensor reads pressure in kPa
-double pressureHPA = 0; // to turn pressure into evelation we need hPa
+double pressureHPA = 0; // to turn pressure into elevation we need hPa
+double maxElevationPoint = 0; // the highest elevation the cyclist is at
 
 // Pressure Task Control
 int pressureInterval = 500; // The task interval in ms.
@@ -378,6 +379,10 @@ void updatePressure () {
           secondRead = true;
         }
       } else {
+        if (elevation > maxElevationPoint) { //update max elevation point if we go to a higher evelation point
+          maxElevationPoint = elevation;
+        }
+
         if (elevationH == 0) { //if no change in elevation, update history, but basically do no nothing
         elevationH = elevation;
         } else {
@@ -403,6 +408,10 @@ void updatePressure () {
 
         Serial.print("elevation Change = ");
         Serial.print(elevationChange);
+        Serial.println(" m");
+
+        Serial.print("Max Elevation Point = ");
+        Serial.print(maxElevationPoint);
         Serial.println(" m");
       }
     }

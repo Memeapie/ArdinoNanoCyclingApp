@@ -1,3 +1,18 @@
+#include <Arduino_LPS22HB.h>
+#include <math.h> //library for maths pow function
+
+
+// Global Variables
+// Debug Mode
+bool testing = true;
+
+// Error Constants
+const int ERRORCLEAR = 0; // No fault.
+const int ERRORTIMING = 1; // The task failed due to a timing error.
+const int ERRORSENSOR = 2; // A task sensor has failed.
+
+
+
 int readAttempts = 1; //counter to read how many attempts has taken place, because when the sensor reads the pressure for the first time something weird happens
 boolean secondRead = false; //turns to true after first read, prevents first reading affecting whole loop
 double pressureAtSeaLevel = 1023.0; //atmpshpehric pressure at sea level, need to get a value for kent coast// currently using manston reading at 1800 on 07/04
@@ -8,6 +23,7 @@ double elevationChange = 0; // elevation change between current read and previou
 double elevationGain = 0; // the rider's total elevationGain or loss throughout the ride
 double pressureKPA = 0; //sensor reads pressure in kPa
 double pressureHPA = 0; // to turn pressure into evelation we need hPa
+double maxElevationPoint = 0; // the highest elevation the cyclist is at
 
 // Pressure Task Control
 int pressureInterval = 500; // The task interval in ms.
@@ -93,6 +109,10 @@ void updatePressure () {
           secondRead = true;
         }
       } else {
+        if (elevation > maxElevationPoint) { //update max elevation point if we go to a higher evelation point
+          maxElevationPoint = elevation;
+        }
+
         if (elevationH == 0) { //if no change in elevation, update history, but basically do no nothing
         elevationH = elevation;
         } else {
@@ -118,6 +138,10 @@ void updatePressure () {
 
         Serial.print("elevation Change = ");
         Serial.print(elevationChange);
+        Serial.println(" m");
+
+        Serial.print("Max Elevation Point = ");
+        Serial.print(maxElevationPoint);
         Serial.println(" m");
       }
     }
