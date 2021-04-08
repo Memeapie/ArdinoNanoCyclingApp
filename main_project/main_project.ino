@@ -210,13 +210,13 @@ void updateTempHumidity(){
     }
 }
 
-// Method to Update Temperature and Humidity
+// Method to Update LightLevel
 void updateLightLevel(){
 
-    // Reading Temperature & Humidity
+    // Reading LightLevel
     lightLevelStartTime = millis();
 
-    // Decide if the interval for Updating Temperature & Humidity has passed.
+    // Decide if the interval for Updating LightLevel has passed
     if(lightLevelStartTime > (lightLevelStartTimeH+lightLevelInterval)){
 
         // Check that the we have not failed to read the sensors in the expected period.
@@ -324,7 +324,7 @@ void updatePressure () {
   // Reading Pressure
   pressureStartTime = millis();
 
-  // Decide if the interval for Updating Pressure
+  // Decide if the interval for Updating Pressure has passed
   if(pressureStartTime > (pressureStartTimeH+pressureInterval)){
 
   if(pressureStartTime > (pressureStartTimeH+pressureFailInterval)){
@@ -360,8 +360,8 @@ void updatePressure () {
       Serial.println(" hPa");
     }
 
-    firstHalfOfElevationCalculation = pow((pressureHPA/pressureAtSeaLevel), (1/5.255)); // calculate the first half of the evelation calculation using Math library pow function
-    elevation = 44340 * (1-firstHalfOfElevationCalculation); // perform second half of the calculation to get the evelation in m;
+    firstHalfOfElevationCalculation = pow((pressureHPA/pressureAtSeaLevel), (1/5.255)); // calculate the first half of the elevation calculation using Math library pow function
+    elevation = 44340 * (1-firstHalfOfElevationCalculation); // perform second half of the calculation to get the elevation in m;
 
     if (testing) {
       Serial.print("firstHalfOfElevationCalculation = ");
