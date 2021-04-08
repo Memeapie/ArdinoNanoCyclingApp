@@ -35,27 +35,18 @@ void updatePressure () {
     Serial.print("elevation History = "); //forTesting purposes
     Serial.print(elevationH);
     Serial.println(" m");
-    Serial.print("elevation Gain = "); //something weird happens, elevation gain automatically becomes like a value greater than 2800;
+    Serial.print("elevation Gain = ");
     Serial.print(elevationGain);
     Serial.println(" m");
-
-    Serial.print("readAttempts = ");
-    Serial.print(readAttempts);
-    Serial.println();
-    Serial.print("secondRead = ");
-    Serial.print(secondRead);
-    Serial.println();
-
-    Serial.print("Pressure = ");
-    Serial.print(pressureKPA);
-    Serial.println(" kPa");
-
   }
 
   pressureKPA = BARO.readPressure();
-
   double pressureHPA = pressureKPA * 10;
+
   if(testing) {
+    Serial.print("Pressure = ");
+    Serial.print(pressureKPA);
+    Serial.println(" kPa");
     Serial.print("Pressure = ");
     Serial.print(pressureHPA);
     Serial.println(" hPa");
@@ -82,13 +73,8 @@ void updatePressure () {
   } else {
     if (elevationH == 0) { //elevationH does something weird on first read therefore if we reach outlier, we reset history value
         elevationH = elevation;
-        Serial.print("else -> if");
-        Serial.println(" m");
-
     } else {
       if (elevation != elevationH) {
-         Serial.print("else -> if -> if");
-         Serial.println(" m");
          elevationChange = (elevation - elevationH);
          elevationGain += elevationChange; //doesn't work as intended
          elevationH = elevation;
@@ -109,8 +95,6 @@ void updatePressure () {
     Serial.print(elevationChange);
     Serial.println(" m");
   }
-
-
 
    Serial.println();
 
