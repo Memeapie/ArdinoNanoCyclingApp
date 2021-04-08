@@ -82,6 +82,14 @@ double elevationGain = 0; // the rider's total elevationGain or loss throughout 
 double pressureKPA = 0; //sensor reads pressure in kPa
 double pressureHPA = 0; // to turn pressure into evelation we need hPa
 
+// Pressure Task Control
+int pressureInterval = 500; // The task interval in ms.
+int pressureLength; // Length of task this time.
+int pressureStartTime; // The start time of the task in ms.
+int pressureStartTimeH = millis(); // The clock when the task starts history.
+int pressureFailInterval = 1500; // The task fail interval in ms.
+int pressureError = ERRORCLEAR; // Error Code container.
+
 void setup() {
     // Initialise Serial Output
     Serial.begin(9600);
@@ -313,71 +321,91 @@ void bluetoothServicing(){
 
 void updatePressure () {
 
-  if (testing) {
-    Serial.print("elevation History = ");
-    Serial.print(elevationH);
-    Serial.println(" m");
-    Serial.print("elevation Gain = ");
-    Serial.print(elevationGain);
-    Serial.println(" m");
-  }
+  // Reading Pressure
+  pressureStartTime = millis();
 
-  pressureKPA = BARO.readPressure(); // readPressure from sensor in kPa
-  pressureHPA = pressureKPA * 10; // convert reading to hPa
+  // Decide if the interval for Updating Pressure
+  if(pressureStartTime > (pressureStartTimeH+pressureInterval)){
 
-  if(testing) {
-    Serial.print("Pressure = ");
-    Serial.print(pressureKPA);
-    Serial.println(" kPa");
-    Serial.print("Pressure = ");
-    Serial.print(pressureHPA);
-    Serial.println(" hPa");
-  }
+  if(pressureStartTime > (pressureStartTimeH+pressureFailInterval)){
+      if(testing){
+          Serial.println("Pressure failed to read in specified time.");
+          delay(300);
+      }
 
-  firstHalfOfElevationCalculation = pow((pressureHPA/pressureAtSeaLevel), (1/5.255)); // calculate the first half of the evelation calculation using Math library pow function
-  elevation = 44340 * (1-firstHalfOfElevationCalculation); // perform second half of the calculation to get the evelation in m;
+      // Log Error Code
+      pressureError = ERRORTIMING;
+      pressureStartTimeH = pressureStartTime;
 
-  if (testing) {
-    Serial.print("firstHalfOfElevationCalculation = ");
-    Serial.print(firstHalfOfElevationCalculation);
-    Serial.println();
-    Serial.print("elevation = ");
-    Serial.print(elevation);
-    Serial.println(" m");
-
-  }
-
-  if (!secondRead) { // check to see what read we are in, if first read, basically ignore the read as its always weird
-    readAttempts++;
-    if (readAttempts = 1) {
-      secondRead = true;
-    }
   } else {
-    if (elevationH == 0) { //if no change in elevation, update history, but basically do no nothing
-        elevationH = elevation;
+
+    if (testing) {
+      Serial.print("elevation History = ");
+      Serial.print(elevationH);
+      Serial.println(" m");
+      Serial.print("elevation Gain = ");
+      Serial.print(elevationGain);
+      Serial.println(" m");
+    }
+
+    pressureKPA = BARO.readPressure(); // readPressure from sensor in kPa
+    pressureHPA = pressureKPA * 10; // convert reading to hPa
+
+    if(testing) {
+      Serial.print("Pressure = ");
+      Serial.print(pressureKPA);
+      Serial.println(" kPa");
+      Serial.print("Pressure = ");
+      Serial.print(pressureHPA);
+      Serial.println(" hPa");
+    }
+
+    firstHalfOfElevationCalculation = pow((pressureHPA/pressureAtSeaLevel), (1/5.255)); // calculate the first half of the evelation calculation using Math library pow function
+    elevation = 44340 * (1-firstHalfOfElevationCalculation); // perform second half of the calculation to get the evelation in m;
+
+    if (testing) {
+      Serial.print("firstHalfOfElevationCalculation = ");
+      Serial.print(firstHalfOfElevationCalculation);
+      Serial.println();
+      Serial.print("elevation = ");
+      Serial.print(elevation);
+      Serial.println(" m");
+    }
+
+    if (!secondRead) { // check to see what read we are in, if first read, basically ignore the read as its always weird
+      readAttempts++;
+      if (readAttempts = 1) {
+        secondRead = true;
+      }
     } else {
-      if (elevation != elevationH) { // if there is a change in elevation update elevationGain
-         elevationChange = (elevation - elevationH);
-         elevationGain += elevationChange;
-         elevationH = elevation; //reset history
+      if (elevationH == 0) { //if no change in elevation, update history, but basically do no nothing
+        elevationH = elevation;
+      } else {
+        if (elevation != elevationH) { // if there is a change in elevation update elevationGain
+          elevationChange = (elevation - elevationH);
+          elevationGain += elevationChange;
+          elevationH = elevation; //reset history
       }
     }
   }
 
-  if (testing) {
-    Serial.print("elevation History = ");
-    Serial.print(elevationH);
-    Serial.println(" m");
+    pressureLength = millis() - tempHumidityStartTime;
+    pressureStartTimeH = tempHumidityStartTime; //Copy history so we can use it to trigger the next shot
 
-    Serial.print("elevation Gain = ");
-    Serial.print(elevationGain);
-    Serial.println(" m");
+    if (testing) {
+      Serial.print("elevation History = ");
+      Serial.print(elevationH);
+      Serial.println(" m");
 
-    Serial.print("elevation Change = ");
-    Serial.print(elevationChange);
-    Serial.println(" m");
+      Serial.print("elevation Gain = ");
+      Serial.print(elevationGain);
+      Serial.println(" m");
+
+      Serial.print("elevation Change = ");
+      Serial.print(elevationChange);
+      Serial.println(" m");
+    }
   }
-
 }
 
 void loop() {
