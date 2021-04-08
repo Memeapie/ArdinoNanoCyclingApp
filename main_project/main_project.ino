@@ -273,6 +273,10 @@ void bluetoothServicing(){
             // Write to the Characteristics of BLE (i.e characteristic.writeValue(value))
             bluetoothTempLevel.writeValue(temp);
             bluetoothHumidityLevel.writeValue(humidity);
+            bluetoothLightLevelIntensity.writeValue(lightLevelIntensity);
+            bluetoothLightLevelRed.writeValue(lightLevelRed);
+            bluetoothLightLevelGreen.writeValue(lightLevelGreen);
+            bluetoothLightLevelBlue.writeValue(lightLevelBlue);
 
         }
     } else {
