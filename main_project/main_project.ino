@@ -389,8 +389,8 @@ void updatePressure () {
       }
     }
 
-      pressureLength = millis() - tempHumidityStartTime;
-      pressureStartTimeH = tempHumidityStartTime; //Copy history so we can use it to trigger the next shot
+      pressureLength = millis() - pressureStartTime;
+      pressureStartTimeH = pressureStartTime; //Copy history so we can use it to trigger the next shot
 
       if (testing) {
         Serial.print("elevation History = ");
