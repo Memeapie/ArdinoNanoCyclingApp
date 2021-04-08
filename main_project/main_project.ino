@@ -3,6 +3,9 @@
 #include <PDM.h>
 #include <Arduino_LSM9DS1.h>
 #include <Arduino_APDS9960.h>
+#include <Arduino_LPS22HB.h>
+#include <math.h> //library for maths pow function
+
 
 // Global Variables
 // Debug Mode
@@ -67,6 +70,18 @@ int lightLevelStartTimeH = millis(); // The clock when the task starts history.
 int lightLevelFailInterval = 1500; // The task fail interval in ms.
 int lightLevelError = ERRORCLEAR; // Error Code container.
 
+// Pressure Sensor Values
+int readAttempts = 1; //counter to read how many attempts has taken place, because when the sensor reads the pressure for the first time something weird happens
+boolean secondRead = false; //turns to true after first read, prevents first reading affecting whole loop
+double pressureAtSeaLevel = 1023.0; //atmpshpehric pressure at sea level, need to get a value for kent coast// currently using manston reading at 1800 on 07/04
+double firstHalfOfElevationCalculation = 0; // part one of elevation calculation, makes use of <math> to do an x to the power of calculation
+double elevation = 0; // the elevation the cyclist is cycling at
+double elevationH = 0; // the cyclist elevation last time
+double elevationChange = 0; // elevation change between current read and previous read
+double elevationGain = 0; // the rider's total elevationGain or loss throughout the ride
+double pressureKPA = 0; //sensor reads pressure in kPa
+double pressureHPA = 0; // to turn pressure into evelation we need hPa
+
 void setup() {
     // Initialise Serial Output
     Serial.begin(9600);
@@ -93,6 +108,12 @@ void setup() {
     // Initialise APDS9960 Light Sensor
     if (!APDS.begin()) {
        Serial.println("Error initializing APDS9960 sensor!");
+    }
+
+    //initialize PressureSensor
+    if (!BARO.begin()) {
+        Serial.println("Failed to initialize pressure sensor!");
+        while (1);
     }
 
     // Initialise Bluetooth Module
@@ -290,14 +311,86 @@ void bluetoothServicing(){
 
 }
 
+void updatePressure () {
+
+  if (testing) {
+    Serial.print("elevation History = ");
+    Serial.print(elevationH);
+    Serial.println(" m");
+    Serial.print("elevation Gain = ");
+    Serial.print(elevationGain);
+    Serial.println(" m");
+  }
+
+  pressureKPA = BARO.readPressure(); // readPressure from sensor in kPa
+  pressureHPA = pressureKPA * 10; // convert reading to hPa
+
+  if(testing) {
+    Serial.print("Pressure = ");
+    Serial.print(pressureKPA);
+    Serial.println(" kPa");
+    Serial.print("Pressure = ");
+    Serial.print(pressureHPA);
+    Serial.println(" hPa");
+  }
+
+  firstHalfOfElevationCalculation = pow((pressureHPA/pressureAtSeaLevel), (1/5.255)); // calculate the first half of the evelation calculation using Math library pow function
+  elevation = 44340 * (1-firstHalfOfElevationCalculation); // perform second half of the calculation to get the evelation in m;
+
+  if (testing) {
+    Serial.print("firstHalfOfElevationCalculation = ");
+    Serial.print(firstHalfOfElevationCalculation);
+    Serial.println();
+    Serial.print("elevation = ");
+    Serial.print(elevation);
+    Serial.println(" m");
+
+  }
+
+  if (!secondRead) { // check to see what read we are in, if first read, basically ignore the read as its always weird
+    readAttempts++;
+    if (readAttempts = 1) {
+      secondRead = true;
+    }
+  } else {
+    if (elevationH == 0) { //if no change in elevation, update history, but basically do no nothing
+        elevationH = elevation;
+    } else {
+      if (elevation != elevationH) { // if there is a change in elevation update elevationGain
+         elevationChange = (elevation - elevationH);
+         elevationGain += elevationChange;
+         elevationH = elevation; //reset history
+      }
+    }
+  }
+
+  if (testing) {
+    Serial.print("elevation History = ");
+    Serial.print(elevationH);
+    Serial.println(" m");
+
+    Serial.print("elevation Gain = ");
+    Serial.print(elevationGain);
+    Serial.println(" m");
+
+    Serial.print("elevation Change = ");
+    Serial.print(elevationChange);
+    Serial.println(" m");
+  }
+
+}
+
 void loop() {
 
     updateTempHumidity();
 
     updateLightLevel();
 
+    updatePressure();
+
     bluetoothStartTime = millis();
     if(bluetoothStartTime > (bluetoothStartTimeH+bluetoothInterval)) {
          bluetoothServicing();
     }
+
 }

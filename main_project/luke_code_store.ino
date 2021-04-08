@@ -6,7 +6,7 @@ boolean testing = true;
 int readAttempts = 1;
 boolean secondRead = false; //using second read at the minute because the first read is being weird
 double pressureAtSeaLevel = 1023.0; //atmpshpehric pressure at sea level, need to get a value for kent coast// currently using manston reading at 1800 on 07/04
-double firstHalfofElevationCalculation = 0;
+double firstHalfOfElevationCalculation = 0;
 double elevation = 0;
 double elevationH = 0;
 double elevationChange = 0;
@@ -52,12 +52,12 @@ void updatePressure () {
     Serial.println(" hPa");
   }
 
-  firstHalfofElevationCalculation = pow((pressureHPA/pressureAtSeaLevel), (1/5.255));
-  elevation = 44340 * (1-firstHalfofElevationCalculation);
+  firstHalfOfElevationCalculation = pow((pressureHPA/pressureAtSeaLevel), (1/5.255));
+  elevation = 44340 * (1-firstHalfOfElevationCalculation);
 
   if (testing) {
-    Serial.print("firstHalfofElevationCalculation = ");
-    Serial.print(firstHalfofElevationCalculation);
+    Serial.print("firstHalfOfElevationCalculation = ");
+    Serial.print(firstHalfOfElevationCalculation);
     Serial.println();
     Serial.print("elevation = ");
     Serial.print(elevation);
