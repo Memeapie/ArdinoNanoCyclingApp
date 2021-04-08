@@ -3,13 +3,15 @@
 
 
 boolean testing = true;
-int readAttempts = 0;
+int readAttempts = 1;
 boolean secondRead = false; //using second read at the minute because the first read is being weird
 double pressureAtSeaLevel = 1023.0; //atmpshpehric pressure at sea level, need to get a value for kent coast// currently using manston reading at 1800 on 07/04
 double firstHalfofElevationCalculation = 0;
 double elevation = 0;
 double elevationH = 0;
+double elevationChange = 0;
 double elevationGain = 0;
+double pressureKPA = 0;
 
 //double pow;
 
@@ -28,7 +30,6 @@ void loop() {
 }
 
 void updatePressure () {
- double pressureKPA = BARO.readPressure();
 
   if (testing) {
     Serial.print("elevation History = "); //forTesting purposes
@@ -38,7 +39,7 @@ void updatePressure () {
     Serial.print(elevationGain);
     Serial.println(" m");
 
-    Serial.print("readAttempts");
+    Serial.print("readAttempts = ");
     Serial.print(readAttempts);
     Serial.println();
     Serial.print("secondRead = ");
@@ -50,6 +51,8 @@ void updatePressure () {
     Serial.println(" kPa");
 
   }
+
+  pressureKPA = BARO.readPressure();
 
   double pressureHPA = pressureKPA * 10;
   if(testing) {
@@ -73,16 +76,21 @@ void updatePressure () {
 
   if (!secondRead) { //doesn't really work, need to fix this
     readAttempts++;
-    if (readAttempts=1) {
+    if (readAttempts = 1) {
       secondRead = true;
     }
   } else {
-    if (elevationH = 0 || elevationH > 2000) { //elevationH does something weird on first read therefore if we reach outlier, we reset history value
-      elevationH = elevation;
+    if (elevationH == 0) { //elevationH does something weird on first read therefore if we reach outlier, we reset history value
+        elevationH = elevation;
+        Serial.print("else -> if");
+        Serial.println(" m");
+
     } else {
       if (elevation != elevationH) {
-
-         elevationGain = elevationGain + (elevation - elevationH); //doesn't work as intended
+         Serial.print("else -> if -> if");
+         Serial.println(" m");
+         elevationChange = (elevation - elevationH);
+         elevationGain += elevationChange; //doesn't work as intended
          elevationH = elevation;
       }
     }
@@ -95,6 +103,10 @@ void updatePressure () {
 
     Serial.print("elevation Gain = ");
     Serial.print(elevationGain);
+    Serial.println(" m");
+
+    Serial.print("elevation Change = ");
+    Serial.print(elevationChange);
     Serial.println(" m");
   }
 
