@@ -26,8 +26,8 @@ BLEFloatCharacteristic bluetoothLightLevelIntensity("2102", BLERead | BLENotify)
 BLEFloatCharacteristic bluetoothLightLevelRed("2102", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothLightLevelGreen("2102", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothLightLevelBlue("2102", BLERead | BLENotify);
-BLEFloatCharacteristic bluetoothElevationGainLevel("2102", BLERead | BLENotify);
-BLEFloatCharacteristic bluetoothMaxElevationLevel("2102", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothElevationGainLevel("2103", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothMaxElevationLevel("2104", BLERead | BLENotify);
 
 // BLE Descriptors
 BLEDescriptor bluetoothTempLevelDescriptor("2901", "Temperature");
@@ -263,10 +263,10 @@ void updateLightLevel(){
                     Serial.print("Light Level Blue: ");
                     Serial.println(lightLevelGreen);
                     Serial.print("Light Level Intensity: ");
-                    Serial.println(lightLevelIntensity);                    
+                    Serial.println(lightLevelIntensity);
                 }
             } else {
-            
+
                 // Log Error Code
                 if(lightLevelError == ERRORCLEAR){
                     if(testing){
@@ -434,6 +434,7 @@ void updatePressure () {
         }
     }
 }
+
 void loop() {
 
     updateTempHumidity();
@@ -446,5 +447,4 @@ void loop() {
     if(bluetoothStartTime > (bluetoothStartTimeH+bluetoothInterval)) {
          bluetoothServicing();
     }
-
 }
