@@ -26,11 +26,11 @@ double pressureHPA = 0; // to turn pressure into evelation we need hPa
 double maxElevationPoint = 0; // the highest elevation the cyclist is at
 
 // Pressure Task Control
-int pressureInterval = 500; // The task interval in ms.
+int pressureInterval = 5000; // The task interval in ms.
 int pressureLength; // Length of task this time.
 int pressureStartTime; // The start time of the task in ms.
 int pressureStartTimeH = millis(); // The clock when the task starts history.
-int pressureFailInterval = 1500; // The task fail interval in ms.
+int pressureFailInterval = 15000; // The task fail interval in ms.
 int pressureError = ERRORCLEAR; // Error Code container.
 
 //double pow;
@@ -91,64 +91,73 @@ void updatePressure () {
                 Serial.println(" hPa");
             }
 
-            firstHalfOfElevationCalculation = pow((pressureHPA/pressureAtSeaLevel), (1/5.255)); // calculate the first half of the elevation calculation using Math library pow function
-            elevation = 44340 * (1-firstHalfOfElevationCalculation); // perform second half of the calculation to get the elevation in m;
-
-            if (testing) {
-                Serial.print("firstHalfOfElevationCalculation = ");
-                Serial.print(firstHalfOfElevationCalculation);
-                Serial.println();
-                Serial.print("elevation = ");
-                Serial.print(elevation);
-                Serial.println(" m");
-            }
-
             if (!secondRead) { // check to see what read we are in, if first read, basically ignore the read as its always weird
-                readAttempts++;
-                if (readAttempts = 1) {
+                if (readAttempts == 1) {
                     secondRead = true;
+                    readAttempts = 2;
+                }
+
+                if (testing) {
+                    Serial.print(readAttempts);
+                    Serial.println(" On first Read");
                 }
             } else {
-                if (elevation > maxElevationPoint) { //update max elevation point if we go to a higher elevation point
-                    maxElevationPoint = elevation;
-                }
-
-                if (elevationH == 0) { //if no change in elevation, update history, but basically do no nothing
-                    elevationH = elevation;
+                if (readAttempts == 2) {
+                  firstHalfOfElevationCalculation = pow((pressureHPA/pressureAtSeaLevel), (1/5.255)); // calculate the first half of the elevation calculation using Math library pow function
+                  elevation = 44340 * (1-firstHalfOfElevationCalculation); // perform second half of the calculation to get the elevation in m;
+                  readAttempts = 3;
                 } else {
-                    if (elevation != elevationH) { // if there is a change in elevation update elevationGain
-                        elevationChange = (elevation - elevationH);
-                        elevationGain += elevationChange;
-                        elevationH = elevation; //reset history
-                    }
-                }
-            }
+                  Serial.println(" On third Read");
+                  if (testing) {
+                      Serial.print("firstHalfOfElevationCalculation = ");
+                      Serial.print(firstHalfOfElevationCalculation);
+                      Serial.println();
+                      Serial.print("elevation = ");
+                      Serial.print(elevation);
+                      Serial.println(" m");
+                  }
 
-            pressureLength = millis() - pressureStartTime; //7ms
-            pressureStartTimeH = pressureStartTime; //Copy history so we can use it to trigger the next shot
+                  if (elevation > maxElevationPoint) { //update max elevation point if we go to a higher elevation point
+                      maxElevationPoint = elevation;
+                  }
 
-            if (testing) {
-                Serial.print("elevation History = ");
-                Serial.print(elevationH);
-                Serial.println(" m");
+                  if (elevationH == 0) { //if no change in elevation, update history, but basically do no nothing
+                      elevationH = elevation;
+                  } else {
+                      if (elevation != elevationH) { // if there is a change in elevation update elevationGain
+                          elevationChange = (elevation - elevationH);
+                          elevationGain += elevationChange;
+                          elevationH = elevation; //reset history
+                      }
+                  }
+              }
 
-                Serial.print("elevation Gain = ");
-                Serial.print(elevationGain);
-                Serial.println(" m");
+              pressureLength = millis() - pressureStartTime; //7ms
+              pressureStartTimeH = pressureStartTime; //Copy history so we can use it to trigger the next shot
 
-                Serial.print("elevation Change = ");
-                Serial.print(elevationChange);
-                Serial.println(" m");
+              if (testing) {
+                  Serial.print("elevation History = ");
+                  Serial.print(elevationH);
+                  Serial.println(" m");
 
-                Serial.print("Max Elevation Point = ");
-                Serial.print(maxElevationPoint);
-                Serial.println(" m");
+                  Serial.print("elevation Gain = ");
+                  Serial.print(elevationGain);
+                  Serial.println(" m");
 
-                Serial.print("Pressure Length = ");
-                Serial.print(pressureLength);
-                Serial.println(" ms");
-            }
-        }
+                  Serial.print("elevation Change = ");
+                  Serial.print(elevationChange);
+                  Serial.println(" m");
+
+                  Serial.print("Max Elevation Point = ");
+                  Serial.print(maxElevationPoint);
+                  Serial.println(" m");
+
+                  Serial.print("Pressure Length = ");
+                  Serial.print(pressureLength);
+                  Serial.println(" ms");
+              }
+          }
+       }
     }
 
     Serial.println();
