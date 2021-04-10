@@ -31,7 +31,6 @@ BLEFloatCharacteristic bluetoothMaximumVelocity("2105", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothMaximumAcceleration("2106", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothCurrentAcceleration("2107", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothImpact("2108", BLERead | BLENotify);
-    bluetoothMaxElevationLevel.addDescriptor(bluetoothMaxElevationLevelDescriptor);
 
 // BLE Descriptors
 BLEDescriptor bluetoothTempLevelDescriptor("2901", "Temperature");
@@ -46,7 +45,6 @@ BLEDescriptor bluetoothElevationGainLevelDescriptor("2901", "Elevation Gain");
 BLEDescriptor bluetoothMaxElevationLevelDescriptor("2901", "Max Elevation");
 BLEDescriptor bluetoothMaxCurrentAccelerationDescriptor("2901", "Current Acceleration");
 BLEDescriptor bluetoothImpactDescriptor("2901", "Impact Detected?");
-BLEDescriptor bluetoothMaxElevationLevel.addDescriptor(bluetoothMaxElevationLevelDescriptor);
 
 // BLE Task Control
 long bluetoothInterval = 200; // The task interval in ms.
