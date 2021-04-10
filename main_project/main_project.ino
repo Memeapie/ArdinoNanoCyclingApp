@@ -6,7 +6,6 @@
 #include <Arduino_LPS22HB.h>
 #include <math.h> //library for maths pow function
 
-
 // Global Variables
 // Debug Mode
 bool testing = true;
@@ -19,7 +18,7 @@ const int ERRORSENSOR = 2; // A task sensor has failed.
 // BLE Service
 BLEService bluetoothCycleService("180C");
 
-// BLE Charactertistics
+// BLE Characteristics
 BLEFloatCharacteristic bluetoothTempLevel("2101", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothHumidityLevel("2102", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothLightLevelIntensity("2102", BLERead | BLENotify);
@@ -74,6 +73,19 @@ int lightLevelStartTimeH = millis(); // The clock when the task starts history.
 int lightLevelFailInterval = 1500; // The task fail interval in ms.
 int lightLevelError = ERRORCLEAR; // Error Code container.
 
+// Weather Values
+String weather;
+String weatherH;
+
+// Weather Task Control
+int weatherInterval = 500; // The task interval in ms.
+int weatherIntervalH; // How long it took last time.
+int weatherLength; // Length of task this time.
+int weatherStartTime; // The start time of the task in ms.
+int weatherStartTimeH = millis(); // The clock when the task starts history.
+int weatherFailInterval = 1500; // The task fail interval in ms.
+int weatherError = ERRORCLEAR; // Error Code container.
+
 // Pressure Sensor Values
 int readAttempts = 1; //counter to read how many attempts has taken place, because when the sensor reads the pressure for the first time something weird happens
 bool secondRead = false; //turns to true after first read, prevents first reading affecting whole loop
@@ -123,7 +135,7 @@ void setup() {
        Serial.println("Error initializing APDS9960 sensor!");
     }
 
-    //initialize PressureSensor
+    // Initialize PressureSensor
     if (!BARO.begin()) {
         Serial.println("Failed to initialize pressure sensor!");
         while (1);
@@ -163,6 +175,7 @@ void setup() {
     BLE.addService(bluetoothCycleService);
     BLE.advertise();
 
+    // Print out that we are Waiting for a Connection
     if (testing) {
         Serial.print("Peripheral device MAC: ");
         Serial.println(BLE.address());
@@ -207,8 +220,9 @@ void updateTempHumidity(){
                 Serial.println(humidity);
             }
 
+            // Update the Task Timing Values
             tempHumidityLength = millis() - tempHumidityStartTime;
-            tempHumidityStartTimeH = tempHumidityStartTime; //Copy history so we can use it to trigger the next shot
+            tempHumidityStartTimeH = tempHumidityStartTime;
 
             if(testing){
                 Serial.print("Temperature & Humidity Task Time Interval: ");
@@ -219,7 +233,7 @@ void updateTempHumidity(){
     }
 }
 
-// Method to Update LightLevel
+// Method to Update Light Level
 void updateLightLevel(){
 
     // Reading LightLevel
@@ -290,6 +304,117 @@ void updateLightLevel(){
     }
 }
 
+//Method to Update Pressure
+void updatePressure () {
+
+    // Reading Pressure
+    pressureStartTime = millis();
+
+    // Decide if the interval for Updating Pressure has passed
+    if(pressureStartTime > (pressureStartTimeH+pressureInterval)) {
+
+        if(pressureStartTime > (pressureStartTimeH+pressureFailInterval)){
+            if(testing){
+                Serial.println("Pressure failed to read in specified time.");
+                delay(300);
+            }
+
+        // Log Error Code
+        pressureError = ERRORTIMING;
+        pressureStartTimeH = pressureStartTime;
+
+        } else {
+
+            // Print Out Elevation When Testing
+            if (testing) {
+                Serial.print("elevation History = ");
+                Serial.print(elevationH);
+                Serial.println(" m");
+                Serial.print("elevation Gain = ");
+                Serial.print(elevationGain);
+                Serial.println(" m");
+            }
+
+            // Update Pressure Variables
+            pressureKPA = BARO.readPressure(); // readPressure from sensor in kPa
+            pressureHPA = pressureKPA * 10; // convert reading to hPa
+
+            // Print Out Pressure When Testing
+            if(testing) {
+                Serial.print("Pressure = ");
+                Serial.print(pressureKPA);
+                Serial.println(" kPa");
+                Serial.print("Pressure = ");
+                Serial.print(pressureHPA);
+                Serial.println(" hPa");
+            }
+
+            firstHalfOfElevationCalculation = pow((pressureHPA/pressureAtSeaLevel), (1/5.255)); // calculate the first half of the elevation calculation using Math library pow function
+            elevation = 44340 * (1-firstHalfOfElevationCalculation); // perform second half of the calculation to get the elevation in m;
+
+            // Print Out Elevation Calculation When Testing
+            if (testing) {
+                Serial.print("firstHalfOfElevationCalculation = ");
+                Serial.print(firstHalfOfElevationCalculation);
+                Serial.println();
+                Serial.print("elevation = ");
+                Serial.print(elevation);
+                Serial.println(" m");
+            }
+
+            if (!secondRead) { // check to see what read we are in, if first read, basically ignore the read as its always weird
+                readAttempts++;
+                if (readAttempts == 1) {
+                    secondRead = true;
+                }
+            } else {
+                if (elevation > maxElevationPoint) { //update max elevation point if we go to a higher elevation point
+                    maxElevationPoint = elevation;
+                }
+
+                if (elevationH == 0) { //if no change in elevation, update history, but basically do no nothing
+                    elevationH = elevation;
+                } else {
+                    if (elevation != elevationH) { // if there is a change in elevation update elevationGain
+                        elevationChange = (elevation - elevationH);
+                        elevationGain += elevationChange;
+                        elevationH = elevation; //reset history
+                    }
+                }
+            }
+
+            pressureLength = millis() - pressureStartTime; //7ms
+            pressureStartTimeH = pressureStartTime; //Copy history so we can use it to trigger the next shot
+
+            // Print Out Final Values When Testing
+            if (testing) {
+                Serial.print("elevation History = ");
+                Serial.print(elevationH);
+                Serial.println(" m");
+
+                Serial.print("elevation Gain = ");
+                Serial.print(elevationGain);
+                Serial.println(" m");
+
+                Serial.print("elevation Change = ");
+                Serial.print(elevationChange);
+                Serial.println(" m");
+
+                Serial.print("Max Elevation Point = ");
+                Serial.print(maxElevationPoint);
+                Serial.println(" m");
+
+                Serial.print("Pressure Length = ");
+                Serial.print(pressureLength);
+                Serial.println(" ms");
+
+
+            }
+        }
+    }
+}
+
+// Bluetooth Servicing Function
 void bluetoothServicing(){
 
     // Designate Central Task
@@ -334,110 +459,87 @@ void bluetoothServicing(){
 
 }
 
-//Method to updatePressure
-void updatePressure () {
+// Method to Update Weather Prediction
+void updateWeatherPrediction(){
 
-    // Reading Pressure
-    pressureStartTime = millis();
+    // Reading Weather Function Start Time
+    weatherStartTime = millis();
 
-    // Decide if the interval for Updating Pressure has passed
-    if(pressureStartTime > (pressureStartTimeH+pressureInterval)) {
+    // Decide if the interval for Updating Weather Prediction has passed
+    if(weatherStartTime > (weatherStartTimeH+weatherInterval)){
 
-        if(pressureStartTime > (pressureStartTimeH+pressureFailInterval)){
+        // Check that the we have not failed to read the sensors in the expected period.
+        if(weatherStartTime > (weatherStartTimeH+weatherFailInterval)){
             if(testing){
-                Serial.println("Pressure failed to read in specified time.");
+                Serial.println("Light Level failed to read in specified time.");
                 delay(300);
             }
 
-        // Log Error Code
-        pressureError = ERRORTIMING;
-        pressureStartTimeH = pressureStartTime;
+            // Log Error Code
+            weatherError = ERRORTIMING;
+            weatherStartTimeH = weatherStartTime;
 
         } else {
 
-            if (testing) {
-                Serial.print("elevation History = ");
-                Serial.print(elevationH);
-                Serial.println(" m");
-                Serial.print("elevation Gain = ");
-                Serial.print(elevationGain);
-                Serial.println(" m");
-            }
+            // Update the Weather Information History
+            weatherH = weather;
 
-            pressureKPA = BARO.readPressure(); // readPressure from sensor in kPa
-            pressureHPA = pressureKPA * 10; // convert reading to hPa
-
-            if(testing) {
-                Serial.print("Pressure = ");
-                Serial.print(pressureKPA);
-                Serial.println(" kPa");
-                Serial.print("Pressure = ");
-                Serial.print(pressureHPA);
-                Serial.println(" hPa");
-            }
-
-            firstHalfOfElevationCalculation = pow((pressureHPA/pressureAtSeaLevel), (1/5.255)); // calculate the first half of the elevation calculation using Math library pow function
-            elevation = 44340 * (1-firstHalfOfElevationCalculation); // perform second half of the calculation to get the elevation in m;
-
-            if (testing) {
-                Serial.print("firstHalfOfElevationCalculation = ");
-                Serial.print(firstHalfOfElevationCalculation);
-                Serial.println();
-                Serial.print("elevation = ");
-                Serial.print(elevation);
-                Serial.println(" m");
-            }
-
-            if (!secondRead) { // check to see what read we are in, if first read, basically ignore the read as its always weird
-                readAttempts++;
-                if (readAttempts == 1) {
-                    secondRead = true;
-                }
+            // Update the Weather Prediction Value
+            String tempWord = "";
+            if ((temp < 20) && (temp < tempH)){
+                tempWord = "Getting Colder";
+            } else if (temp < 20){
+                tempWord = "Cold";
+            } else if ((temp > 34) && (temp > tempH)) {
+                tempWord = "Getting Hotter";
+            } else if (temp > 34) {
+                tempWord = "Hot";
             } else {
-                if (elevation > maxElevationPoint) { //update max elevation point if we go to a higher elevation point
-                    maxElevationPoint = elevation;
-                }
-
-                if (elevationH == 0) { //if no change in elevation, update history, but basically do no nothing
-                    elevationH = elevation;
-                } else {
-                    if (elevation != elevationH) { // if there is a change in elevation update elevationGain
-                        elevationChange = (elevation - elevationH);
-                        elevationGain += elevationChange;
-                        elevationH = elevation; //reset history
-                    }
-                }
+                tempWord = "Mild";
             }
 
-            pressureLength = millis() - pressureStartTime; //7ms
-            pressureStartTimeH = pressureStartTime; //Copy history so we can use it to trigger the next shot
+            String rainingWord = "";
+            if ((humidity >= humidityH) && (pressureKPA < 100)){
+                rainingWord = "Raining";
+            } else if ((humidity <= humidityH) && (pressureKPA > 100)){
+                rainingWord = "Dry";
+            }
 
-            if (testing) {
-                Serial.print("elevation History = ");
-                Serial.print(elevationH);
-                Serial.println(" m");
+            String lightWord = "";
+            if ((lightLevelIntensity < 150) && (lightLevelIntensity < lightLevelIntensityH)){
+                lightWord = "Getting Dark";
+            } else if (lightLevelIntensity < 150){
+                lightWord = "Dark";
+            } else if ((lightLevelIntensity > 1500) && (lightLevelIntensity < lightLevelIntensityH)){
+                lightWord = "Getting Bright";
+            } else if (lightLevelIntensity > 1500){
+                lightWord = "Bright";
+            } else {
+                lightWord = "Mild Light";
+            }
 
-                Serial.print("elevation Gain = ");
-                Serial.print(elevationGain);
-                Serial.println(" m");
+            weather = lightWord + " " + tempWord + " " + rainingWord;
 
-                Serial.print("elevation Change = ");
-                Serial.print(elevationChange);
-                Serial.println(" m");
+            // Print Values if in Debug Mode
+            if(testing){
+                Serial.print("Weather: ");
+                Serial.println(weather);
+            }
 
-                Serial.print("Max Elevation Point = ");
-                Serial.print(maxElevationPoint);
-                Serial.println(" m");
+            // Copy history so we can use it to trigger the next shot
+            weatherLength = millis() - weatherStartTime;
+            weatherStartTimeH = weatherStartTime;
 
-                Serial.print("Pressure Length = ");
-                Serial.print(pressureLength);
-                Serial.println(" ms");
-
-
+            // Print Values if in Debug Mode
+            if(testing){
+                Serial.print("Weather Task Time Interval: ");
+                Serial.print(weatherLength);
+                Serial.println(" Milliseconds");
             }
         }
     }
 }
+
 
 void loop() {
 
@@ -446,6 +548,8 @@ void loop() {
     updateLightLevel();
 
     updatePressure();
+
+    updateWeatherPrediction();
 
     bluetoothStartTime = millis();
     if(bluetoothStartTime > (bluetoothStartTimeH+bluetoothInterval)) {
