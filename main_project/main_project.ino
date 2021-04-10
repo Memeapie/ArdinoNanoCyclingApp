@@ -27,6 +27,7 @@ BLEFloatCharacteristic bluetoothLightLevelGreen("2102", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothLightLevelBlue("2102", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothElevationGainLevel("2103", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothMaxElevationLevel("2104", BLERead | BLENotify);
+BLEStringCharacteristic bluetoothWeather("2104", BLERead | BLENotify, 20);
 
 // BLE Descriptors
 BLEDescriptor bluetoothTempLevelDescriptor("2901", "Temperature");
@@ -37,6 +38,7 @@ BLEDescriptor bluetoothLightLevelGreenDescriptor("2901", "Light Level (Green)");
 BLEDescriptor bluetoothLightLevelBlueDescriptor("2901", "Light Level (Blue)");
 BLEDescriptor bluetoothElevationGainLevelDescriptor("2901", "Elevation Gain");
 BLEDescriptor bluetoothMaxElevationLevelDescriptor("2901", "Max Elevation");
+BLEDescriptor bluetoothWeatherDescriptor("2901", "Weather");
 
 // BLE Task Control
 long bluetoothInterval = 200; // The task interval in ms.
@@ -160,6 +162,7 @@ void setup() {
     bluetoothLightLevelBlue.addDescriptor(bluetoothLightLevelBlueDescriptor);
     bluetoothElevationGainLevel.addDescriptor(bluetoothElevationGainLevelDescriptor);
     bluetoothMaxElevationLevel.addDescriptor(bluetoothMaxElevationLevelDescriptor);
+    bluetoothWeather.addDescriptor(bluetoothMaxElevationLevelDescriptor);
 
     // BLE Characteristics
     bluetoothCycleService.addCharacteristic(bluetoothTempLevel);
@@ -170,6 +173,7 @@ void setup() {
     bluetoothCycleService.addCharacteristic(bluetoothLightLevelBlue);
     bluetoothCycleService.addCharacteristic(bluetoothElevationGainLevel);
     bluetoothCycleService.addCharacteristic(bluetoothMaxElevationLevel);
+    bluetoothCycleService.addCharacteristic(bluetoothWeather);
 
     // Advertise BLE Service
     BLE.addService(bluetoothCycleService);
@@ -442,6 +446,7 @@ void bluetoothServicing(){
             bluetoothLightLevelBlue.writeValue(lightLevelBlue);
             bluetoothElevationGainLevel.writeValue(elevationGain);
             bluetoothMaxElevationLevel.writeValue(maxElevationPoint);
+            bluetoothWeather.writeValue(weather);
 
         }
     } else {
