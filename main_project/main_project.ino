@@ -28,6 +28,9 @@ BLEFloatCharacteristic bluetoothLightLevelGreen("2102", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothLightLevelBlue("2102", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothElevationGainLevel("2103", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothMaxElevationLevel("2104", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothMaximumVelocity("2105", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothMaximumAcceleration("2106", BLERead | BLENotify);
+
 
 // BLE Descriptors
 BLEDescriptor bluetoothTempLevelDescriptor("2901", "Temperature");
@@ -36,8 +39,11 @@ BLEDescriptor bluetoothLightLevelIntensityDescriptor("2901", "Light Level (Inten
 BLEDescriptor bluetoothLightLevelRedDescriptor("2901", "Light Level (Red)");
 BLEDescriptor bluetoothLightLevelGreenDescriptor("2901", "Light Level (Green)");
 BLEDescriptor bluetoothLightLevelBlueDescriptor("2901", "Light Level (Blue)");
+BLEDescriptor bluetoothMaximumVelocityDescriptor("2901", "Max Velocity (M/s)");
+BLEDescriptor bluetoothMaximumAccelerationDescriptor("2901", "Max Acceleration (M/S^2)");
 BLEDescriptor bluetoothElevationGainLevelDescriptor("2901", "Elevation Gain");
 BLEDescriptor bluetoothMaxElevationLevelDescriptor("2901", "Max Elevation");
+
 
 // BLE Task Control
 long bluetoothInterval = 200; // The task interval in ms.
@@ -148,6 +154,8 @@ void setup() {
     bluetoothLightLevelBlue.addDescriptor(bluetoothLightLevelBlueDescriptor);
     bluetoothElevationGainLevel.addDescriptor(bluetoothElevationGainLevelDescriptor);
     bluetoothMaxElevationLevel.addDescriptor(bluetoothMaxElevationLevelDescriptor);
+    bluetoothMaximumVelocity.addDescriptor(bluetoothMaximumVelocityDescriptor);
+    bluetoothMaximumAcceleration.addDescriptor(bluetoothMaximumAccelerationDescriptor);
 
     // BLE Characteristics
     bluetoothCycleService.addCharacteristic(bluetoothTempLevel);
@@ -158,6 +166,8 @@ void setup() {
     bluetoothCycleService.addCharacteristic(bluetoothLightLevelBlue);
     bluetoothCycleService.addCharacteristic(bluetoothElevationGainLevel);
     bluetoothCycleService.addCharacteristic(bluetoothMaxElevationLevel);
+    bluetoothCycleService.addCharacteristic(bluetoothMaximumVelocity);
+    bluetoothCycleService.addCharacteristic(bluetoothMaximumAcceleration);
 
     // Advertise BLE Service
     BLE.addService(bluetoothCycleService);
