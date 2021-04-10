@@ -21,32 +21,32 @@ BLEService bluetoothCycleService("180C");
 // BLE Characteristics
 BLEFloatCharacteristic bluetoothTempLevel("2101", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothHumidityLevel("2102", BLERead | BLENotify);
-BLEFloatCharacteristic bluetoothLightLevelIntensity("2102", BLERead | BLENotify);
-BLEFloatCharacteristic bluetoothLightLevelRed("2102", BLERead | BLENotify);
-BLEFloatCharacteristic bluetoothLightLevelGreen("2102", BLERead | BLENotify);
-BLEFloatCharacteristic bluetoothLightLevelBlue("2102", BLERead | BLENotify);
-BLEFloatCharacteristic bluetoothElevationGainLevel("2103", BLERead | BLENotify);
-BLEFloatCharacteristic bluetoothMaxElevationLevel("2104", BLERead | BLENotify);
-BLEFloatCharacteristic bluetoothMaximumVelocity("2105", BLERead | BLENotify);
-BLEFloatCharacteristic bluetoothMaximumAcceleration("2106", BLERead | BLENotify);
-BLEFloatCharacteristic bluetoothCurrentAcceleration("2107", BLERead | BLENotify);
-BLEFloatCharacteristic bluetoothImpact("2108", BLERead | BLENotify);
-BLEStringCharacteristic bluetoothWeather("2104", BLERead | BLENotify, 20);
+BLEFloatCharacteristic bluetoothLightLevelIntensity("2103", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothLightLevelRed("2104", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothLightLevelGreen("2105", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothLightLevelBlue("2106", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothElevationGainLevel("2107", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothMaxElevationLevel("2108", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothMaximumVelocity("2109", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothMaximumAcceleration("2110", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothCurrentAcceleration("2111", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothImpact("2112", BLERead | BLENotify);
+BLEStringCharacteristic bluetoothWeather("2113", BLERead | BLENotify, 20);
 
 // BLE Descriptors
 BLEDescriptor bluetoothTempLevelDescriptor("2901", "Temperature");
-BLEDescriptor bluetoothHumidityLevelDescriptor("2901", "Humidity");
-BLEDescriptor bluetoothLightLevelIntensityDescriptor("2901", "Light Level (Intensity)");
-BLEDescriptor bluetoothLightLevelRedDescriptor("2901", "Light Level (Red)");
-BLEDescriptor bluetoothLightLevelGreenDescriptor("2901", "Light Level (Green)");
-BLEDescriptor bluetoothLightLevelBlueDescriptor("2901", "Light Level (Blue)");
-BLEDescriptor bluetoothMaximumVelocityDescriptor("2901", "Max Velocity (M/s)");
-BLEDescriptor bluetoothMaximumAccelerationDescriptor("2901", "Max Acceleration (M/S^2)");
-BLEDescriptor bluetoothElevationGainLevelDescriptor("2901", "Elevation Gain");
-BLEDescriptor bluetoothMaxElevationLevelDescriptor("2901", "Max Elevation");
-BLEDescriptor bluetoothMaxCurrentAccelerationDescriptor("2901", "Current Acceleration");
-BLEDescriptor bluetoothImpactDescriptor("2901", "Impact Detected?");
-BLEDescriptor bluetoothWeatherDescriptor("2901", "Weather");
+BLEDescriptor bluetoothHumidityLevelDescriptor("2902", "Humidity");
+BLEDescriptor bluetoothLightLevelIntensityDescriptor("2903", "Light Level (Intensity)");
+BLEDescriptor bluetoothLightLevelRedDescriptor("2904", "Light Level (Red)");
+BLEDescriptor bluetoothLightLevelGreenDescriptor("2905", "Light Level (Green)");
+BLEDescriptor bluetoothLightLevelBlueDescriptor("2906", "Light Level (Blue)");
+BLEDescriptor bluetoothMaximumVelocityDescriptor("2907", "Max Velocity (M/s)");
+BLEDescriptor bluetoothMaximumAccelerationDescriptor("2908", "Max Acceleration (M/S^2)");
+BLEDescriptor bluetoothElevationGainLevelDescriptor("2909", "Elevation Gain");
+BLEDescriptor bluetoothMaxElevationLevelDescriptor("2910", "Max Elevation");
+BLEDescriptor bluetoothMaxCurrentAccelerationDescriptor("2911", "Current Acceleration");
+BLEDescriptor bluetoothImpactDescriptor("2912", "Impact Detected?");
+BLEDescriptor bluetoothWeatherDescriptor("2913", "Weather");
 
 // BLE Task Control
 long bluetoothInterval = 200; // The task interval in ms.
@@ -195,7 +195,7 @@ void setup() {
     bluetoothMaximumAcceleration.addDescriptor(bluetoothMaximumAccelerationDescriptor);
     bluetoothCurrentAcceleration.addDescriptor(bluetoothMaxCurrentAccelerationDescriptor);
     bluetoothImpact.addDescriptor(bluetoothImpactDescriptor);
-    bluetoothWeather.addDescriptor(bluetoothMaxElevationLevelDescriptor);
+    bluetoothWeather.addDescriptor(bluetoothWeatherDescriptor);
 
     // BLE Characteristics
     bluetoothCycleService.addCharacteristic(bluetoothTempLevel);
