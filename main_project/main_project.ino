@@ -27,7 +27,11 @@ BLEFloatCharacteristic bluetoothLightLevelGreen("2102", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothLightLevelBlue("2102", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothElevationGainLevel("2103", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothMaxElevationLevel("2104", BLERead | BLENotify);
-BLEStringCharacteristic bluetoothWeather("2104", BLERead | BLENotify, 20);
+BLEFloatCharacteristic bluetoothMaximumVelocity("2105", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothMaximumAcceleration("2106", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothCurrentAcceleration("2107", BLERead | BLENotify);
+BLEFloatCharacteristic bluetoothImpact("2108", BLERead | BLENotify);
+    bluetoothMaxElevationLevel.addDescriptor(bluetoothMaxElevationLevelDescriptor);
 
 // BLE Descriptors
 BLEDescriptor bluetoothTempLevelDescriptor("2901", "Temperature");
@@ -36,9 +40,13 @@ BLEDescriptor bluetoothLightLevelIntensityDescriptor("2901", "Light Level (Inten
 BLEDescriptor bluetoothLightLevelRedDescriptor("2901", "Light Level (Red)");
 BLEDescriptor bluetoothLightLevelGreenDescriptor("2901", "Light Level (Green)");
 BLEDescriptor bluetoothLightLevelBlueDescriptor("2901", "Light Level (Blue)");
+BLEDescriptor bluetoothMaximumVelocityDescriptor("2901", "Max Velocity (M/s)");
+BLEDescriptor bluetoothMaximumAccelerationDescriptor("2901", "Max Acceleration (M/S^2)");
 BLEDescriptor bluetoothElevationGainLevelDescriptor("2901", "Elevation Gain");
 BLEDescriptor bluetoothMaxElevationLevelDescriptor("2901", "Max Elevation");
-BLEDescriptor bluetoothWeatherDescriptor("2901", "Weather");
+BLEDescriptor bluetoothMaxCurrentAccelerationDescriptor("2901", "Current Acceleration");
+BLEDescriptor bluetoothImpactDescriptor("2901", "Impact Detected?");
+BLEDescriptor bluetoothMaxElevationLevel.addDescriptor(bluetoothMaxElevationLevelDescriptor);
 
 // BLE Task Control
 long bluetoothInterval = 200; // The task interval in ms.
@@ -109,6 +117,27 @@ int pressureStartTimeH = millis(); // The clock when the task starts history.
 int pressureFailInterval = 1500; // The task fail interval in ms.
 int pressureError = ERRORCLEAR; // Error Code container.
 
+// Accelerometer Values
+double AccelerometerGravityMultiplier = 9.80665; // Multiplier to convert acceleration reading from G's to M/S^2.
+float x, y, z; // Accelerometer readings in G's.
+float AccelerometeraccellX; // Acceleration along X axis in M/S^2.
+static float AccelerometerVelocityX = 0; // Initial Velocity of X axis.
+float AccelerometerVelocityChangeX; // Change in velocity as a measure of accleration times time.
+float AccelerometerVelocityXH; // Previous recorded velocity of X axis.
+float AccelerometerMaxVelocityX; // Highest Velocity Recorded.
+float AccelerometerMaxAccellX; // Great acceleration value recorded in M/S^2.
+int AccelerometerImpact = -3; // Impact threshold in G's.
+bool AccelerometerImpactDetected = false; // Impact Indicator.
+
+// Accelerometer Task Control
+int AccelerometerTaskInterval = 50; // Task interval in ms.
+int AccelerometerTaskLength; // Length of task this time.
+int AccelerometerStartTime = 0; // The start time of the task in ms.
+int AccelerometerStartTimeH = millis(); // Start time of the last task run in ms.
+double AccelerometerTimeChange = 0; //Time between each sensor measurement in seconds.
+int AccelerometerTaskFailInterval = 1000; // The task fail interval in ms.
+int AccelerometerTaskError = ERRORCLEAR; // Error Code Container.
+
 void setup() {
     // Initialise Serial Output
     Serial.begin(9600);
@@ -162,6 +191,10 @@ void setup() {
     bluetoothLightLevelBlue.addDescriptor(bluetoothLightLevelBlueDescriptor);
     bluetoothElevationGainLevel.addDescriptor(bluetoothElevationGainLevelDescriptor);
     bluetoothMaxElevationLevel.addDescriptor(bluetoothMaxElevationLevelDescriptor);
+    bluetoothMaximumVelocity.addDescriptor(bluetoothMaximumVelocityDescriptor);
+    bluetoothMaximumAcceleration.addDescriptor(bluetoothMaximumAccelerationDescriptor);
+    bluetoothCurrentAcceleration.addDescriptor(bluetoothMaxCurrentAccelerationDescriptor);
+    bluetoothImpact.addDescriptor(bluetoothImpactDescriptor);
     bluetoothWeather.addDescriptor(bluetoothMaxElevationLevelDescriptor);
 
     // BLE Characteristics
@@ -173,6 +206,10 @@ void setup() {
     bluetoothCycleService.addCharacteristic(bluetoothLightLevelBlue);
     bluetoothCycleService.addCharacteristic(bluetoothElevationGainLevel);
     bluetoothCycleService.addCharacteristic(bluetoothMaxElevationLevel);
+    bluetoothCycleService.addCharacteristic(bluetoothMaximumVelocity);
+    bluetoothCycleService.addCharacteristic(bluetoothMaximumAcceleration);
+    bluetoothCycleService.addCharacteristic(bluetoothCurrentAcceleration);
+    bluetoothCycleService.addCharacteristic(bluetoothImpact);
     bluetoothCycleService.addCharacteristic(bluetoothWeather);
 
     // Advertise BLE Service
@@ -308,6 +345,56 @@ void updateLightLevel(){
     }
 }
 
+// Bluetooth Servicing Function
+void bluetoothServicing(){
+
+    // Designate Central Task
+    BLEDevice central = BLE.central();
+
+    // If the BLE Service is defined, send some data
+    if (central) {
+        if (testing) {
+            Serial.print("Connected to central: ");
+            Serial.println(central.address());
+        }
+
+        // Make the LED Turn on to signify data transmission
+        digitalWrite(LED_BUILTIN, HIGH);
+
+        // If there is a device connected, begin sending data
+        if (central.connected()) {
+
+            // Write to the Characteristics of BLE (i.e characteristic.writeValue(value))
+            bluetoothTempLevel.writeValue(temp);
+            bluetoothHumidityLevel.writeValue(humidity);
+            bluetoothLightLevelIntensity.writeValue(lightLevelIntensity);
+            bluetoothLightLevelRed.writeValue(lightLevelRed);
+            bluetoothLightLevelGreen.writeValue(lightLevelGreen);
+            bluetoothLightLevelBlue.writeValue(lightLevelBlue);
+            bluetoothElevationGainLevel.writeValue(elevationGain);
+            bluetoothMaxElevationLevel.writeValue(maxElevationPoint);
+            bluetoothMaximumVelocity.writeValue(AccelerometerMaxVelocityX);
+            bluetoothMaximumAcceleration.writeValue(AccelerometerMaxAccellX);
+            bluetoothCurrentAcceleration.writeValue(AccelerometeraccellX);
+            bluetoothImpact.writeValue(AccelerometerImpactDetected);
+            bluetoothWeather.writeValue(weather);
+
+        }
+    } else {
+
+        if (testing) {
+            Serial.println("Central Disconnected");
+        }
+
+        // Make the LED Turn off to signify data transmission has finished
+        digitalWrite(LED_BUILTIN, LOW);
+    }
+
+    //Now lets get the history set up.
+    bluetoothStartTimeH = bluetoothStartTime;
+
+}
+
 //Method to Update Pressure
 void updatePressure () {
 
@@ -418,133 +505,99 @@ void updatePressure () {
     }
 }
 
-// Bluetooth Servicing Function
-void bluetoothServicing(){
+//Method to Update Acceleration and Velocity
+void updateAcceleration() {
 
-    // Designate Central Task
-    BLEDevice central = BLE.central();
+    //Update Start Time and Calculate Interval between Readings
+      AccelerometerStartTime = millis();
+     AccelerometerTimeChange = ((AccelerometerStartTime - AccelerometerStartTimeH)*0.001);
 
-    // If the BLE Service is defined, send some data
-    if (central) {
-        if (testing) {
-            Serial.print("Connected to central: ");
-            Serial.println(central.address());
+     //Decide if interval for sensor update has passed
+     if(AccelerometerStartTime > AccelerometerStartTimeH+AccelerometerTaskInterval){
+
+//Check to see whether we have failed to read the sensor within the designated Timeframe.
+      if(AccelerometerStartTime > (AccelerometerStartTimeH+AccelerometerTaskFailInterval)){
+        if(testing){
+          Serial.println("Accelerometer Task Failed to happen in Time.");
+          delay(300);
         }
 
-        // Make the LED Turn on to signify data transmission
-        digitalWrite(LED_BUILTIN, HIGH);
+        // Log Error Code
+        AccelerometerTaskError = ERRORTIMING;
+        AccelerometerStartTimeH = AccelerometerStartTime;
+      } else{
 
-        // If there is a device connected, begin sending data
-        if (central.connected()) {
+        //Read Accelerometer Values
+          if (IMU.accelerationAvailable()) {
+            IMU.readAcceleration(x, y, z);
 
-            // Write to the Characteristics of BLE (i.e characteristic.writeValue(value))
-            bluetoothTempLevel.writeValue(temp);
-            bluetoothHumidityLevel.writeValue(humidity);
-            bluetoothLightLevelIntensity.writeValue(lightLevelIntensity);
-            bluetoothLightLevelRed.writeValue(lightLevelRed);
-            bluetoothLightLevelGreen.writeValue(lightLevelGreen);
-            bluetoothLightLevelBlue.writeValue(lightLevelBlue);
-            bluetoothElevationGainLevel.writeValue(elevationGain);
-            bluetoothMaxElevationLevel.writeValue(maxElevationPoint);
-            bluetoothWeather.writeValue(weather);
+            //Update History
+            AccelerometerVelocityXH = AccelerometerVelocityX;
 
-        }
-    } else {
+            //Convert accelertion in G's into M/S^2
+            float ax = (x*AccelerometerGravityMultiplier);
+            AccelerometeraccellX = ax;
 
-        if (testing) {
-            Serial.println("Central Disconnected");
-        }
+            //Calculate Change in Velocity
+            AccelerometerVelocityChangeX = (ax*AccelerometerTimeChange);
 
-        // Make the LED Turn off to signify data transmission has finished
-        digitalWrite(LED_BUILTIN, LOW);
-    }
+            //Calculate total Velocity
+            AccelerometerVelocityX = (AccelerometerVelocityXH + AccelerometerVelocityChangeX);
 
-    //Now lets get the history set up.
-    bluetoothStartTimeH = bluetoothStartTime;
 
-}
-
-// Method to Update Weather Prediction
-void updateWeatherPrediction(){
-
-    // Reading Weather Function Start Time
-    weatherStartTime = millis();
-
-    // Decide if the interval for Updating Weather Prediction has passed
-    if(weatherStartTime > (weatherStartTimeH+weatherInterval)){
-
-        // Check that the we have not failed to read the sensors in the expected period.
-        if(weatherStartTime > (weatherStartTimeH+weatherFailInterval)){
-            if(testing){
-                Serial.println("Light Level failed to read in specified time.");
-                delay(300);
+            //If negative deceleration exceeds threshold, update boolean expression
+            if(x < AccelerometerImpact){
+              AccelerometerImpactDetected = true;
             }
 
-            // Log Error Code
-            weatherError = ERRORTIMING;
-            weatherStartTimeH = weatherStartTime;
-
-        } else {
-
-            // Update the Weather Information History
-            weatherH = weather;
-
-            // Update the Weather Prediction Value
-            String tempWord = "";
-            if ((temp < 20) && (temp < tempH)){
-                tempWord = "Getting Colder";
-            } else if (temp < 20){
-                tempWord = "Cold";
-            } else if ((temp > 34) && (temp > tempH)) {
-                tempWord = "Getting Hotter";
-            } else if (temp > 34) {
-                tempWord = "Hot";
-            } else {
-                tempWord = "Mild";
+            //If acceleration exceeds previous highest value, overwrite highest value
+            if(ax > AccelerometerMaxAccellX){
+              AccelerometerMaxAccellX = ax;
             }
 
-            String rainingWord = "";
-            if ((humidity >= humidityH) && (pressureKPA < 100)){
-                rainingWord = "Raining";
-            } else if ((humidity <= humidityH) && (pressureKPA > 100)){
-                rainingWord = "Dry";
+            //If velocity exceeds previous highest value, overwrite highest value
+            if(AccelerometerVelocityX > AccelerometerMaxVelocityX){
+              AccelerometerMaxVelocityX = AccelerometerVelocityX;
             }
+          } else {
+            // If IMU failed to start, log error code.
+            if(AccelerometerTaskError == ERRORCLEAR){
+            if(testing) {
+            Serial.println("LSM9DS1 - IMU Failed to Start");
+                }
+                AccelerometerTaskError == ERRORSENSOR;
+              }
+  }
 
-            String lightWord = "";
-            if ((lightLevelIntensity < 150) && (lightLevelIntensity < lightLevelIntensityH)){
-                lightWord = "Getting Dark";
-            } else if (lightLevelIntensity < 150){
-                lightWord = "Dark";
-            } else if ((lightLevelIntensity > 1500) && (lightLevelIntensity < lightLevelIntensityH)){
-                lightWord = "Getting Bright";
-            } else if (lightLevelIntensity > 1500){
-                lightWord = "Bright";
-            } else {
-                lightWord = "Mild Light";
-            }
+  AccelerometerTaskLength = millis() - AccelerometerStartTime;
+  AccelerometerStartTimeH = AccelerometerStartTime; // Copy Start Time to history so we can use it to trigger the next reading
 
-            weather = lightWord + " " + tempWord + " " + rainingWord;
-
-            // Print Values if in Debug Mode
-            if(testing){
-                Serial.print("Weather: ");
-                Serial.println(weather);
-            }
-
-            // Copy history so we can use it to trigger the next shot
-            weatherLength = millis() - weatherStartTime;
-            weatherStartTimeH = weatherStartTime;
-
-            // Print Values if in Debug Mode
-            if(testing){
-                Serial.print("Weather Task Time Interval: ");
-                Serial.print(weatherLength);
-                Serial.println(" Milliseconds");
-            }
+           if(testing){
+            Serial.print("Accelerometer Task Time Interval: ");
+            Serial.print(AccelerometerTaskLength);
+            Serial.println(" Milliseconds");
+            Serial.print("Start Time: ");
+            Serial.println(AccelerometerStartTime);
+            Serial.print("Time Interval (S): ");
+            Serial.println(AccelerometerTimeChange);
+            Serial.print("Acceleration X (M/S^2): ");
+            Serial.println(AccelerometeraccellX);
+            Serial.print("Change in Velocity (M/S): ");
+            Serial.println(AccelerometerVelocityChangeX);
+            Serial.print("Velocity (M/S): ");
+            Serial.println(AccelerometerVelocityX);
+            Serial.print("Impact Detected: ");
+            Serial.println(AccelerometerImpactDetected);
+            Serial.print("Highest Recorded Acceleration (M/S^2): ");
+            Serial.println(AccelerometerMaxAccellX);
+            Serial.print("Highest Recorded Velocity (M/S): ");
+            Serial.println(AccelerometerMaxVelocityX);
+            Serial.println();
+            Serial.println();
+          }
         }
     }
 }
-
 
 void loop() {
 
@@ -553,6 +606,8 @@ void loop() {
     updateLightLevel();
 
     updatePressure();
+
+    updateAcceleration();
 
     updateWeatherPrediction();
 
