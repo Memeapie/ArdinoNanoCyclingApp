@@ -482,92 +482,92 @@ void updatePressure () {
 void updateAcceleration() {
 
     //Update Start Time and Calculate Interval between Readings
-      AccelerometerStartTime = millis();
-     AccelerometerTimeChange = ((AccelerometerStartTime - AccelerometerStartTimeH)*0.001);
+    AccelerometerStartTime = millis();
+    AccelerometerTimeChange = ((AccelerometerStartTime - AccelerometerStartTimeH)*0.001);
 
-     //Decide if interval for sensor update has passed
-     if(AccelerometerStartTime > AccelerometerStartTimeH+AccelerometerTaskInterval){
+    //Decide if interval for sensor update has passed
+    if(AccelerometerStartTime > AccelerometerStartTimeH+AccelerometerTaskInterval){
 
-//Check to see whether we have failed to read the sensor within the designated Timeframe.
-      if(AccelerometerStartTime > (AccelerometerStartTimeH+AccelerometerTaskFailInterval)){
-        if(testing){
-          Serial.println("Accelerometer Task Failed to happen in Time.");
-          delay(300);
-        }
-
-        // Log Error Code
-        AccelerometerTaskError = ERRORTIMING;
-        AccelerometerStartTimeH = AccelerometerStartTime;
-      } else{
-
-        //Read Accelerometer Values
-          if (IMU.accelerationAvailable()) {
-            IMU.readAcceleration(x, y, z);
-
-            //Update History
-            AccelerometerVelocityXH = AccelerometerVelocityX;
-
-            //Convert accelertion in G's into M/S^2
-            float ax = (x*AccelerometerGravityMultiplier);
-            AccelerometeraccellX = ax;
-
-            //Calculate Change in Velocity
-            AccelerometerVelocityChangeX = (ax*AccelerometerTimeChange);
-
-            //Calculate total Velocity
-            AccelerometerVelocityX = (AccelerometerVelocityXH + AccelerometerVelocityChangeX);
-
-
-            //If negative deceleration exceeds threshold, update boolean expression
-            if(x < AccelerometerImpact){
-              AccelerometerImpactDetected = true;
+        //Check to see whether we have failed to read the sensor within the designated Timeframe.
+        if(AccelerometerStartTime > (AccelerometerStartTimeH+AccelerometerTaskFailInterval)){
+            if(testing){
+                Serial.println("Accelerometer Task Failed to happen in Time.");
+                delay(300);
             }
+
+            // Log Error Code
+            AccelerometerTaskError = ERRORTIMING;
+            AccelerometerStartTimeH = AccelerometerStartTime;
+        } else{
+
+            //Read Accelerometer Values
+            if (IMU.accelerationAvailable()) {
+                IMU.readAcceleration(x, y, z);
+
+                //Update History
+                AccelerometerVelocityXH = AccelerometerVelocityX;
+
+                //Convert accelertion in G's into M/S^2
+                float ax = (x*AccelerometerGravityMultiplier);
+                AccelerometeraccellX = ax;
+
+                //Calculate Change in Velocity
+                AccelerometerVelocityChangeX = (ax*AccelerometerTimeChange);
+
+                //Calculate total Velocity
+                AccelerometerVelocityX = (AccelerometerVelocityXH + AccelerometerVelocityChangeX);
+
+
+                //If negative deceleration exceeds threshold, update boolean expression
+                if(x < AccelerometerImpact){
+                    AccelerometerImpactDetected = true;
+                }
 
             //If acceleration exceeds previous highest value, overwrite highest value
-            if(ax > AccelerometerMaxAccellX){
-              AccelerometerMaxAccellX = ax;
-            }
-
-            //If velocity exceeds previous highest value, overwrite highest value
-            if(AccelerometerVelocityX > AccelerometerMaxVelocityX){
-              AccelerometerMaxVelocityX = AccelerometerVelocityX;
-            }
-          } else {
-            // If IMU failed to start, log error code.
-            if(AccelerometerTaskError == ERRORCLEAR){
-            if(testing) {
-            Serial.println("LSM9DS1 - IMU Failed to Start");
+                if(ax > AccelerometerMaxAccellX){
+                    AccelerometerMaxAccellX = ax;
                 }
-                AccelerometerTaskError == ERRORSENSOR;
-              }
-  }
 
-  AccelerometerTaskLength = millis() - AccelerometerStartTime;
-  AccelerometerStartTimeH = AccelerometerStartTime; // Copy Start Time to history so we can use it to trigger the next reading
+                //If velocity exceeds previous highest value, overwrite highest value
+                if(AccelerometerVelocityX > AccelerometerMaxVelocityX){
+                AccelerometerMaxVelocityX = AccelerometerVelocityX;
+                }
+            } else {
+            // If IMU failed to start, log error code.
+                if(AccelerometerTaskError == ERRORCLEAR){
+                    if(testing) {
+                    Serial.println("LSM9DS1 - IMU Failed to Start");
+                    }
+                    AccelerometerTaskError == ERRORSENSOR;
+                }
+            }
 
-           if(testing){
-            Serial.print("Accelerometer Task Time Interval: ");
-            Serial.print(AccelerometerTaskLength);
-            Serial.println(" Milliseconds");
-            Serial.print("Start Time: ");
-            Serial.println(AccelerometerStartTime);
-            Serial.print("Time Interval (S): ");
-            Serial.println(AccelerometerTimeChange);
-            Serial.print("Acceleration X (M/S^2): ");
-            Serial.println(AccelerometeraccellX);
-            Serial.print("Change in Velocity (M/S): ");
-            Serial.println(AccelerometerVelocityChangeX);
-            Serial.print("Velocity (M/S): ");
-            Serial.println(AccelerometerVelocityX);
-            Serial.print("Impact Detected: ");
-            Serial.println(AccelerometerImpactDetected);
-            Serial.print("Highest Recorded Acceleration (M/S^2): ");
-            Serial.println(AccelerometerMaxAccellX);
-            Serial.print("Highest Recorded Velocity (M/S): ");
-            Serial.println(AccelerometerMaxVelocityX);
-            Serial.println();
-            Serial.println();
-          }
+            AccelerometerTaskLength = millis() - AccelerometerStartTime;
+            AccelerometerStartTimeH = AccelerometerStartTime; // Copy Start Time to history so we can use it to trigger the next reading
+
+            if(testing) {
+                Serial.print("Accelerometer Task Time Interval: ");
+                Serial.print(AccelerometerTaskLength);
+                Serial.println(" Milliseconds");
+                Serial.print("Start Time: ");
+                Serial.println(AccelerometerStartTime);
+                Serial.print("Time Interval (S): ");
+                Serial.println(AccelerometerTimeChange);
+                Serial.print("Acceleration X (M/S^2): ");
+                Serial.println(AccelerometeraccellX);
+                Serial.print("Change in Velocity (M/S): ");
+                Serial.println(AccelerometerVelocityChangeX);
+                Serial.print("Velocity (M/S): ");
+                Serial.println(AccelerometerVelocityX);
+                Serial.print("Impact Detected: ");
+                Serial.println(AccelerometerImpactDetected);
+                Serial.print("Highest Recorded Acceleration (M/S^2): ");
+                Serial.println(AccelerometerMaxAccellX);
+                Serial.print("Highest Recorded Velocity (M/S): ");
+                Serial.println(AccelerometerMaxVelocityX);
+                Serial.println();
+                Serial.println();
+            }
         }
     }
 }
