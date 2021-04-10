@@ -386,7 +386,7 @@ void updatePressure () {
 
             if (!secondRead) { // check to see what read we are in, if first read, basically ignore the read as its always weird
                 readAttempts++;
-                if (readAttempts = 1) {
+                if (readAttempts == 1) {
                     secondRead = true;
                 }
             } else {
