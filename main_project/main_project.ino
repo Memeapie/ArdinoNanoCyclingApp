@@ -31,6 +31,7 @@ BLEFloatCharacteristic bluetoothMaximumVelocity("2105", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothMaximumAcceleration("2106", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothCurrentAcceleration("2107", BLERead | BLENotify);
 BLEFloatCharacteristic bluetoothImpact("2108", BLERead | BLENotify);
+BLEStringCharacteristic bluetoothWeather("2104", BLERead | BLENotify, 20);
 
 // BLE Descriptors
 BLEDescriptor bluetoothTempLevelDescriptor("2901", "Temperature");
@@ -45,6 +46,7 @@ BLEDescriptor bluetoothElevationGainLevelDescriptor("2901", "Elevation Gain");
 BLEDescriptor bluetoothMaxElevationLevelDescriptor("2901", "Max Elevation");
 BLEDescriptor bluetoothMaxCurrentAccelerationDescriptor("2901", "Current Acceleration");
 BLEDescriptor bluetoothImpactDescriptor("2901", "Impact Detected?");
+BLEDescriptor bluetoothWeatherDescriptor("2901", "Weather");
 
 // BLE Task Control
 long bluetoothInterval = 200; // The task interval in ms.
@@ -498,6 +500,91 @@ void updatePressure () {
                 Serial.println(" ms");
 
 
+            }
+        }
+    }
+}
+
+// Method to Update Weather Prediction
+void updateWeatherPrediction(){
+
+    // Reading Weather Function Start Time
+    weatherStartTime = millis();
+
+    // Decide if the interval for Updating Weather Prediction has passed
+    if(weatherStartTime > (weatherStartTimeH+weatherInterval)){
+
+        // Check that the we have not failed to read the sensors in the expected period.
+        if(weatherStartTime > (weatherStartTimeH+weatherFailInterval)){
+            if(testing){
+                Serial.println("Light Level failed to read in specified time.");
+                delay(300);
+            }
+
+            // Log Error Code
+            weatherError = ERRORTIMING;
+            weatherStartTimeH = weatherStartTime;
+
+        } else {
+
+            // Update the Weather Information History
+            weatherH = weather;
+
+            // Update the Weather Prediction Value
+            String tempWord = "";
+            if ((temp < 20) && (temp < tempH)){
+                tempWord = "Getting Colder";
+            } else if (temp < 20){
+                tempWord = "Cold";
+            } else if ((temp > 34) && (temp > tempH)) {
+                tempWord = "Getting Hotter";
+            } else if (temp > 34) {
+                tempWord = "Hot";
+            } else {
+                tempWord = "Mild";
+            }
+
+            String rainingWord = "";
+            if ((humidity >= humidityH) && (pressureKPA < 100)){
+                rainingWord = "Raining Harder";
+            } else if ((humidity <= humidityH) && (pressureKPA > 100)){
+                rainingWord = "Getting Dryer";
+            } if (pressureKPA < 100){
+                rainingWord = "Raining";
+            } else if (pressureKPA > 100){
+                rainingWord = "Dry";
+            }
+
+            String lightWord = "";
+            if ((lightLevelIntensity < 150) && (lightLevelIntensity < lightLevelIntensityH)){
+                lightWord = "Getting Dark";
+            } else if (lightLevelIntensity < 150){
+                lightWord = "Dark";
+            } else if ((lightLevelIntensity > 1500) && (lightLevelIntensity < lightLevelIntensityH)){
+                lightWord = "Getting Bright";
+            } else if (lightLevelIntensity > 1500){
+                lightWord = "Bright";
+            } else {
+                lightWord = "Mild Light";
+            }
+
+            weather = lightWord + " " + tempWord + " " + rainingWord;
+
+            // Print Values if in Debug Mode
+            if(testing){
+                Serial.print("Weather: ");
+                Serial.println(weather);
+            }
+
+            // Copy history so we can use it to trigger the next shot
+            weatherLength = millis() - weatherStartTime;
+            weatherStartTimeH = weatherStartTime;
+
+            // Print Values if in Debug Mode
+            if(testing){
+                Serial.print("Weather Task Time Interval: ");
+                Serial.print(weatherLength);
+                Serial.println(" Milliseconds");
             }
         }
     }
