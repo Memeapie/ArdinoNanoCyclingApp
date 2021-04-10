@@ -4,33 +4,31 @@
 bool testing = true;
 
 const int ERRORCLEAR = 0; // No fault.
-const int ERRORTIMING = 1; // The task failed due to a timing error.
-const int ERRORSENSOR = 2; // A task sensor has failed.
-
-double JW_gravityMultiplier = 9.80665;
-
-long JW_startTime = 0;
-long JW_startTimeH = 0;
-double JW_timeChange = 0;
-
-float x, y, z;
-
-//Value History
-float JW_accellX;
-static float JW_velocityX = 0;
-float JW_velocityChangeX;
-float JW_velocityXH;
-float JW_maxVelocityX;
-float JW_maxAccellX;
-int JW_impact = -3;
-bool JW_impactDetected = false;
+const int ERRORTIMING = 1; // The Task failed due to a timing error.
+const int ERRORSENSOR = 2; // A Task sensor has failed.
 
 
-//Task Control
-long JW_taskInterval = 50;
-long JW_taskLength;
-long JW_taskFailInterval = 1000;
-int JW_taskError = ERRORCLEAR;
+//Accelerometer Values
+double AccelerometerGravityMultiplier = 9.80665; // Multiplier to convert acceleration reading from G's to M/S^2.
+float x, y, z; // Accelerometer readings in G's.
+float AccelerometeraccellX; // Acceleration along X axis in M/S^2.
+static float AccelerometerVelocityX = 0; // Initial Velocity of X axis.
+float AccelerometerVelocityChangeX; // Change in velocity as a measure of accleration times time.
+float AccelerometerVelocityXH; // Previous recorded velocity of X axis.
+float AccelerometerMaxVelocityX; // Highest Velocity Recorded.
+float AccelerometerMaxAccellX; // Great acceleration value recorded in M/S^2.
+int AccelerometerImpact = -3; // Impact threshold in G's.
+bool AccelerometerImpactDetected = false; // Impact Indicator.
+
+
+//Accelerometer Task Control
+int AccelerometerTaskInterval = 50; // Task interval in ms.
+int AccelerometerTaskLength; // Length of task this time.
+int AccelerometerStartTime = 0; // The start time of the task in ms.
+int AccelerometerStartTimeH = millis(); // Start time of the last task run in ms.
+double AccelerometerTimeChange = 0; //Time between each sensor measurement in seconds.
+int AccelerometerTaskFailInterval = 1000; // The task fail interval in ms.
+int AccelerometerTaskError = ERRORCLEAR; // Error Code Container.
 
 void setup() {
   Serial.begin(9600);
@@ -38,7 +36,7 @@ void setup() {
   Serial.println("Started");
 
   if (!IMU.begin()) {
-    Serial.println("Failed to initialize IMU!");
+    Serial.println("Failed to initialize Accelerometer!");
     while (1);
   }
 }
@@ -46,72 +44,81 @@ void setup() {
 void loop() {
 
 //Update Start Time and Calculate Interval between Readings
-  JW_startTime = millis();
-  JW_timeChange = ((JW_startTime - JW_startTimeH)*0.001);
+  AccelerometerStartTime = millis();
+  AccelerometerTimeChange = ((AccelerometerStartTime - AccelerometerStartTimeH)*0.001);
 
 //Decide if interval for sensor update has passed
-if(JW_startTime > JW_startTimeH+JW_taskInterval){
+if(AccelerometerStartTime > AccelerometerStartTimeH+AccelerometerTaskInterval){
 
-//Check to see whether we have failed to read the sensor within the designated timeframe.
-  if(JW_startTime > (JW_startTimeH+JW_taskFailInterval)){
+//Check to see whether we have failed to read the sensor within the designated Timeframe.
+  if(AccelerometerStartTime > (AccelerometerStartTimeH+AccelerometerTaskFailInterval)){
     if(testing){
-      Serial.println("JW Task Failed to happen in time.");
+      Serial.println("Accelerometer Task Failed to happen in Time.");
       delay(300);
     }
 
     // Log Error Code
-    JW_taskError = ERRORTIMING;
-    JW_startTimeH = JW_startTime;
+    AccelerometerTaskError = ERRORTIMING;
+    AccelerometerStartTimeH = AccelerometerStartTime;
   } else{
 
-//Read IMU Values
+//Read Accelerometer Values
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(x, y, z);
 
     //Update History
-    JW_velocityXH = JW_velocityX;
+    AccelerometerVelocityXH = AccelerometerVelocityX;
 
-    float ax = (x*JW_gravityMultiplier);
-    JW_velocityChangeX = (ax*JW_timeChange);
-    JW_velocityX = (JW_velocityXH + JW_velocityChangeX);
-    JW_accellX = ax;
+    //Convert accelertion in G's into M/S^2
+    float ax = (x*AccelerometerGravityMultiplier);
+    AccelerometeraccellX = ax;
 
-    if(ax < JW_impact){
-      JW_impactDetected = true;
+    //Calculate Change in Velocity
+    AccelerometerVelocityChangeX = (ax*AccelerometerTimeChange);
+
+    //Calculate total Velocity
+    AccelerometerVelocityX = (AccelerometerVelocityXH + AccelerometerVelocityChangeX);
+
+
+    //If negative deceleration exceeds threshold, update boolean expression
+    if(x < AccelerometerImpact){
+      AccelerometerImpactDetected = true;
     }
 
-    if(ax > JW_maxAccellX){
-      JW_maxAccellX = ax;
+    //If acceleration exceeds previous highest value, overwrite highest value
+    if(ax > AccelerometerMaxAccellX){
+      AccelerometerMaxAccellX = ax;
     }
 
-    if(JW_velocityX > JW_maxVelocityX){
-      JW_maxVelocityX = JW_velocityX;
+    //If velocity exceeds previous highest value, overwrite highest value
+    if(AccelerometerVelocityX > AccelerometerMaxVelocityX){
+      AccelerometerMaxVelocityX = AccelerometerVelocityX;
     }
   }
 
-  JW_taskLength = millis() - JW_startTime;
-  JW_startTimeH = JW_startTime; // Copy start time to history so we can use it to trigger the next reading
+  AccelerometerTaskLength = millis() - AccelerometerStartTime;
+  AccelerometerStartTimeH = AccelerometerStartTime; // Copy Start Time to history so we can use it to trigger the next reading
 
    if(testing){
-    Serial.print("JW Task Time Interval: ");
-    Serial.print(JW_taskLength);
+    Serial.print("Accelerometer Task Time Interval: ");
+    Serial.print(AccelerometerTaskLength);
     Serial.println(" Milliseconds");
     Serial.print("Start Time: ");
-    Serial.println(JW_startTime);
+    Serial.println(AccelerometerStartTime);
     Serial.print("Time Interval (S): ");
-    Serial.println(JW_timeChange);
+    Serial.println(AccelerometerTimeChange);
     Serial.print("Acceleration X (M/S^2): ");
-    Serial.println(JW_accellX);
+    Serial.println(AccelerometeraccellX);
     Serial.print("Change in Velocity (M/S): ");
-    Serial.println(JW_velocityChangeX);
+    Serial.println(AccelerometerVelocityChangeX);
     Serial.print("Velocity (M/S): ");
-    Serial.println(JW_velocityX);
+    Serial.println(AccelerometerVelocityX);
     Serial.print("Impact Detected: ");
-    Serial.println(JW_impactDetected);
-    Serial.print("Maximum Acceleration (M/S^2): ");
-    Serial.println(JW_maxAccellX);
-    Serial.print("Maximum Velocity (M/S): ");
-    Serial.println(JW_maxVelocityX);
+    Serial.println(AccelerometerImpactDetected);
+    Serial.print("Highest Recorded Acceleration (M/S^2): ");
+    Serial.println(AccelerometerMaxAccellX);
+    Serial.print("Highest Recorded Velocity (M/S): ");
+    Serial.println(AccelerometerMaxVelocityX);
     Serial.println();
     Serial.println();
      }
