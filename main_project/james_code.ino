@@ -94,6 +94,14 @@ if(AccelerometerStartTime > AccelerometerStartTimeH+AccelerometerTaskInterval){
     if(AccelerometerVelocityX > AccelerometerMaxVelocityX){
       AccelerometerMaxVelocityX = AccelerometerVelocityX;
     }
+  } else {
+    // If IMU failed to start, log error code.
+    if(AccelerometerTaskError == ERRORCLEAR){
+    if(testing) {
+    Serial.println("LSM9DS1 - IMU Failed to Start");
+        }
+        AccelerometerTaskError == ERRORSENSOR;
+      }
   }
 
   AccelerometerTaskLength = millis() - AccelerometerStartTime;
