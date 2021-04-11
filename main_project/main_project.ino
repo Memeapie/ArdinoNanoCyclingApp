@@ -395,7 +395,7 @@ void bluetoothServicing(){
 
     if (testing) {
         Serial.print("Bluetooth Time: ");
-        Serial.print(bluetoothStartTime);
+        Serial.print((millis()-bluetoothStartTime));
         Serial.println(" ms");
     }
 
