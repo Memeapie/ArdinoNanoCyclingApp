@@ -49,7 +49,7 @@ BLEDescriptor bluetoothImpactDescriptor("2912", "Impact Detected?");
 BLEDescriptor bluetoothWeatherDescriptor("2913", "Weather");
 
 // BLE Task Control
-long bluetoothInterval = 100; // The task interval in ms.
+long bluetoothInterval = 200; // The task interval in ms.
 long bluetoothStartTime; // The start time of the task in ms.
 long bluetoothStartTimeH = 0; // The clock when the task starts history.
 
