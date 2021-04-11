@@ -49,7 +49,7 @@ BLEDescriptor bluetoothImpactDescriptor("2912", "Impact Detected?");
 BLEDescriptor bluetoothWeatherDescriptor("2913", "Weather");
 
 // BLE Task Control
-long bluetoothInterval = 200; // The task interval in ms.
+long bluetoothInterval = 100; // The task interval in ms.
 long bluetoothStartTime; // The start time of the task in ms.
 long bluetoothStartTimeH = 0; // The clock when the task starts history.
 
@@ -60,7 +60,7 @@ float humidity;
 float humidityH;
 
 // Temperature & Humidity Task Control
-int tempHumidityInterval = 500; // The task interval in ms.
+int tempHumidityInterval = 100; // The task interval in ms.
 int tempHumidityIntervalH; // How long it took last time.
 int tempHumidityLength; // Length of task this time.
 int tempHumidityStartTime; // The start time of the task in ms.
@@ -75,7 +75,7 @@ int lightLevelIntensity;
 int lightLevelIntensityH;
 
 // Light Level Task Control
-int lightLevelInterval = 500; // The task interval in ms.
+int lightLevelInterval = 100; // The task interval in ms.
 int lightLevelIntervalH; // How long it took last time.
 int lightLevelLength; // Length of task this time.
 int lightLevelStartTime; // The start time of the task in ms.
@@ -88,7 +88,7 @@ String weather;
 String weatherH;
 
 // Weather Task Control
-int weatherInterval = 500; // The task interval in ms.
+int weatherInterval = 100; // The task interval in ms.
 int weatherIntervalH; // How long it took last time.
 int weatherLength; // Length of task this time.
 int weatherStartTime; // The start time of the task in ms.
@@ -110,7 +110,7 @@ double pressureHPA = 0; // to turn pressure into elevation we need hPa
 double maxElevationPoint = 0; // the highest elevation the cyclist is at
 
 // Pressure Task Control
-int pressureInterval = 500; // The task interval in ms.
+int pressureInterval = 100; // The task interval in ms.
 int pressureLength; // Length of task this time.
 int pressureStartTime; // The start time of the task in ms.
 int pressureStartTimeH = millis(); // The clock when the task starts history.
@@ -395,7 +395,7 @@ void bluetoothServicing(){
 
     if (testing) {
         Serial.print("Bluetooth Time: ");
-        Serial.print(bluetoothStartTime);
+        Serial.print((millis()-bluetoothStartTime));
         Serial.println(" ms");
     }
 
