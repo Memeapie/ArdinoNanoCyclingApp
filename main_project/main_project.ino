@@ -393,6 +393,12 @@ void bluetoothServicing(){
     //Now lets get the history set up.
     bluetoothStartTimeH = bluetoothStartTime;
 
+    if (testing) {
+        Serial.print("Bluetooth Time: ");
+        Serial.print(bluetoothStartTime);
+        Serial.println(" ms");
+    }
+
 }
 
 //Method to Update Pressure
