@@ -96,10 +96,9 @@ int weatherStartTimeH = millis(); // The clock when the task starts history.
 int weatherFailInterval = 1500; // The task fail interval in ms.
 int weatherError = ERRORCLEAR; // Error Code container.
 
-// Pressure Sensor Values
-int readAttempts = 1; //counter to read how many attempts has taken place, because when the sensor reads the pressure for the first time something weird happens
+// Pressure Sensor Values s
 bool secondRead = false; //turns to true after first read, prevents first reading affecting whole loop
-double pressureAtSeaLevel = 1023.0; //atmpshpehric pressure at sea level, need to get a value for kent coast// currently using manston reading at 1800 on 07/04
+double pressureAtSeaLevel = 1031.0; //atmpshpehric pressure at sea level, need to get a value for kent coast// currently using manston reading at 0900 on 16/04
 double firstHalfOfElevationCalculation = 0; // part one of elevation calculation, makes use of <math> to do an x to the power of calculation
 double elevation = 0; // the elevation the cyclist is cycling at
 double elevationH = 0; // the cyclist elevation last time
@@ -460,10 +459,7 @@ void updatePressure () {
             }
 
             if (!secondRead) { // check to see what read we are in, if first read, basically ignore the read as its always weird
-                readAttempts++;
-                if (readAttempts == 1) {
-                    secondRead = true;
-                }
+                secondRead = true;
             } else {
                 if (elevation > maxElevationPoint) { //update max elevation point if we go to a higher elevation point
                     maxElevationPoint = elevation;
